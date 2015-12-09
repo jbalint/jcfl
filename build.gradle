@@ -1,0 +1,31 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath "jdepend:jdepend:2.9.1"
+  }
+}
+
+apply plugin: "java"
+
+compileJava.options.encoding = "UTF-8"
+javadoc.options.encoding = "UTF-8"
+
+defaultTasks "build"
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  testCompile "junit:junit:4.12"
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir "src/main/java"
+    }
+  }
+}
