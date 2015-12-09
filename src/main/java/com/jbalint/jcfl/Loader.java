@@ -69,7 +69,8 @@ public class Loader {
 			MethodType info = new MethodType();
 			info.descriptorIndex = is.readShort();
 			return info;
-        // TODO: } else if (tag == INVOKE_DYNAMIC.tag) {
+        } else if (tag == INVOKE_DYNAMIC.tag) {
+			throw new UnsupportedOperationException("InvokeDynamic not supported");
 		}
 		throw new IllegalArgumentException("Unknown constant pool tag: " + tag);
 	}
@@ -91,9 +92,13 @@ public class Loader {
 			int constantPoolCount = is.readShort() - 1;
 			System.err.println("Reading " + constantPoolCount + " constants");
 			cf.constantPool.add(new ConstantPoolInfo()); // so CP indexes are exact
-			for (int i = 0; i < 3075/*constantPoolCount*/; ++i) {
+			for (int i = 0; i < constantPoolCount; ++i) {
 				cf.constantPool.add(parseConstantPoolInfo(is));
-				System.err.println("Added: " + cf.constantPool.get(cf.constantPool.size() - 1) + " (" + cf.constantPool.size() + ")");
+				if (cf.constantPool.get(cf.constantPool.size()-1).getClass().equals(LongInfo.class) ||
+					cf.constantPool.get(cf.constantPool.size()-1).getClass().equals(DoubleInfo.class)) {
+					// these types take two entries (a bit odd)
+					i++;
+				}
 			}
 			cf.accessFlags = is.readShort();
 			cf.thisClassIndex = is.readShort();
@@ -101,7 +106,6 @@ public class Loader {
 			int interfacesCount = is.readShort();
 			for (int i = 0; i < interfacesCount; ++i) {
 				cf.interfaces.add(cf.constantPool.get(is.readShort()));
-				System.err.println("Implements: " + cf.interfaces.get(cf.interfaces.size()-1));
 			}
 			int fieldsCount = is.readShort();
 			for (int i = 0; i < fieldsCount; ++i) {
