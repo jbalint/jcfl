@@ -14,66 +14,12 @@ public class ConstantPoolInfo {
 	}
 
 	public InfoType type;
+	/**
+	 * A reference to the constant pool this item is contained in.
+	 */
+	public ConstantPoolInfo constantPool[];
 
-	public static class ClassInfo extends ConstantPoolInfo {
-		public short nameIndex;
-	}
-
-	public static class Fieldref extends ConstantPoolInfo {
-		public short classIndex;
-		public short nameAndTypeIndex;
-	}
-
-	public static class Methodref extends ConstantPoolInfo {
-		public short classIndex;
-		public short nameAndTypeIndex;
-	}
-
-	public static class InterfaceMethodref extends ConstantPoolInfo {
-		public short classIndex;
-		public short nameAndTypeIndex;
-	}
-
-	public static class StringInfo extends ConstantPoolInfo {
-		public short index;
-	}
-
-	public static class IntegerInfo extends ConstantPoolInfo {
-		public int value;
-	}
-
-	public static class FloatInfo extends ConstantPoolInfo {
-		public float value;
-	}
-
-	public static class LongInfo extends ConstantPoolInfo {
-		public long value;
-	}
-
-	public static class DoubleInfo extends ConstantPoolInfo {
-		public double value;
-	}
-
-	public static class NameAndType extends ConstantPoolInfo {
-		public short nameIndex;
-		public short descriptorIndex;
-	}
-
-	public static class Utf8 extends ConstantPoolInfo {
-		public byte[] value;
-	}
-
-	public static class MethodHandle extends ConstantPoolInfo {
-		public byte referenceKind;
-		public short referenceIndex;
-	}
-
-	public static class MethodType extends ConstantPoolInfo {
-		public short descriptorIndex;
-	}
-
-	public static class InvokeDynamic extends ConstantPoolInfo {
-		public short bootstrapMethodAttrIndex;
-		public short nameAndTypeIndex;
+	public String asString() {
+		return toString();
 	}
 }
