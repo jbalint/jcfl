@@ -72,7 +72,10 @@ public class Loader {
 			info.descriptorIndex = is.readUShort();
 			return info;
         } else if (tag == INVOKE_DYNAMIC.tag) {
-			throw new UnsupportedOperationException("InvokeDynamic not supported");
+			InvokeDynamic info = new InvokeDynamic();
+			info.bootstrapMethodAttrIndex = is.readUShort();
+			info.nameAndTypeIndex = is.readUShort();
+			return info;
 		}
 		throw new IllegalArgumentException("Unknown constant pool tag: " + tag);
 	}
@@ -125,9 +128,7 @@ public class Loader {
 			return info;
 		} else if ("StackMapTable".equals(type)) {
 			// skipped (TODO: implement if we ever need this)
-			for (int i = 0; i < length; ++i) {
-				is.read();
-			}
+			for (int i = 0; i < length; ++i) { is.read(); }
 			return null;
 		} else if ("Exceptions".equals(type)) {
 			Exceptions info = new Exceptions();
@@ -219,8 +220,14 @@ public class Loader {
 			}
 			return info;
 		} else if ("Deprecated".equals(type)) {
+			Deprecated info = new Deprecated();
+			info.type = type;
+			return info;
 		}
-		throw new IllegalArgumentException("Unsupported attribute type: " + type);
+		for (int i = 0; i < length; ++i) { is.read(); }
+		//throw new IllegalArgumentException("Unsupported attribute type: " + type);
+		System.err.println("Ignored " + type + " attribute");
+		return null;
 	}
 
 	public static ClassFile load(File file) throws IOException {
