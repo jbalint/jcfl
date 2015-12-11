@@ -4,6 +4,10 @@ public class Methodref extends ConstantPoolInfo {
 	public int classIndex;
 	public int nameAndTypeIndex;
 
+	public Methodref() {
+		type = InfoType.METHOD_REF;
+	}
+
 	public String getClassName() {
 		return constantPool[classIndex].asString();
 	}

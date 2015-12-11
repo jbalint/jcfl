@@ -4,6 +4,10 @@ public class NameAndType extends ConstantPoolInfo {
 	public int nameIndex;
 	public int descriptorIndex;
 
+	public NameAndType() {
+		type = InfoType.NAME_AND_TYPE;
+	}
+
 	public String getName() {
 		return constantPool[nameIndex].asString();
 	}

@@ -11,16 +11,25 @@ public class FieldOrMethodInfo {
 	public List<AttributeInfo> attributes = new ArrayList<>();
 	public ConstantPoolInfo constantPool[];
 
+	public String getName() {
+		return constantPool[nameIndex].asString();
+	}
+
+	public String getDescriptor() {
+		return constantPool[descriptorIndex].asString();
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		if (type == 'F') {
-			sb.append("Field: ");
+			sb.append("Field: ").append(getName()).append(" : ").append(getDescriptor());
 		} else if (type == 'M') {
-			sb.append("Method: ");
+			sb.append("Method: ").append(getName()).append(getDescriptor());
 		}
-		sb.append(constantPool[nameIndex].asString());
-		sb.append(constantPool[descriptorIndex].asString());
+		for (AttributeInfo a : attributes) {
+			sb.append("\n    ").append(a);
+		}
 		return sb.toString();
 	}
 }

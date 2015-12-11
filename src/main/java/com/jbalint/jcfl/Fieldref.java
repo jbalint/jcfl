@@ -4,6 +4,10 @@ public class Fieldref extends ConstantPoolInfo {
 	public int classIndex;
 	public int nameAndTypeIndex;
 
+	public Fieldref() {
+		type = InfoType.FIELD_REF;
+	}
+
 	@Override
 	public String asString() {
 		return constantPool[classIndex].asString() + "." + constantPool[nameAndTypeIndex].asString();

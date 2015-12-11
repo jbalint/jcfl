@@ -4,6 +4,10 @@ public class InterfaceMethodref extends ConstantPoolInfo {
 	public int classIndex;
 	public int nameAndTypeIndex;
 
+	public InterfaceMethodref() {
+		type = InfoType.INTERFACE_METHOD_REF;
+	}
+
 	public String getClassName() {
 		return constantPool[classIndex].asString();
 	}

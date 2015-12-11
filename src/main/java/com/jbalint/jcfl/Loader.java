@@ -2,12 +2,13 @@ package com.jbalint.jcfl;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 
 import static com.jbalint.jcfl.ConstantPoolInfo.InfoType.*;
 
 public class Loader {
-	private static boolean debug = true;
+	private static boolean debug = false;
 
 	private static ConstantPoolInfo parseConstantPoolInfo(UnsignedDataInputStream is) throws IOException {
 		int tag = is.read();
@@ -76,9 +77,9 @@ public class Loader {
 		throw new IllegalArgumentException("Unknown constant pool tag: " + tag);
 	}
 
-	private static FieldOrMethodInfo parseFieldOrMethodInfo(ConstantPoolInfo constantPool[], UnsignedDataInputStream is) throws IOException {
+	private static FieldOrMethodInfo parseFieldOrMethodInfo(ConstantPoolInfo constantPool[], UnsignedDataInputStream is, char type) throws IOException {
 		FieldOrMethodInfo info = new FieldOrMethodInfo();
-		info.type = 'F';
+		info.type = type;
 		info.accessFlags = is.readUShort();
 		info.nameIndex = is.readUShort();
 		info.descriptorIndex = is.readUShort();
@@ -222,13 +223,17 @@ public class Loader {
 		throw new IllegalArgumentException("Unsupported attribute type: " + type);
 	}
 
+	public static ClassFile load(File file) throws IOException {
+		return load(new FileInputStream(file));
+	}
+
 	/**
 	 * Load and parse a Java class file.
 	 */
 	// alias shell='java -Xcheck:jni -esa -agentlib:yt -classpath build/classes/main java.util.prefs.Base64'
-	public static ClassFile load(File physicalFile) throws IOException {
+	public static ClassFile load(InputStream fileInputStream) throws IOException {
 		ClassFile cf = new ClassFile();
-		try (UnsignedDataInputStream is = new UnsignedDataInputStream(new FileInputStream(physicalFile))) {
+		try (UnsignedDataInputStream is = new UnsignedDataInputStream(fileInputStream)) {
 			cf.magic = is.readInt();
 			is.readUShort(); // ignored
 			cf.version = is.readUShort();
@@ -257,11 +262,11 @@ public class Loader {
 			}
 			int fieldsCount = is.readUShort();
 			for (int i = 0; i < fieldsCount; ++i) {
-				cf.fields.add(parseFieldOrMethodInfo(cf.constantPool, is));
+				cf.fieldsAndMethods.add(parseFieldOrMethodInfo(cf.constantPool, is, 'F'));
 			}
 			int methodsCount = is.readUShort();
 			for (int i = 0; i < methodsCount; ++i) {
-				cf.fields.add(parseFieldOrMethodInfo(cf.constantPool, is));
+				cf.fieldsAndMethods.add(parseFieldOrMethodInfo(cf.constantPool, is, 'M'));
 			}
 			int attributesCount = is.readUShort();
 			for (int i = 0; i < attributesCount; ++i) {
