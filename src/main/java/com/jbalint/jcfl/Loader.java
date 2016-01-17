@@ -89,7 +89,16 @@ public class Loader {
 		info.constantPool = constantPool;
 		int attributesCount = is.readUShort();
 		for (int i = 0; i < attributesCount; ++i) {
-			info.attributes.add(parseAttribute(constantPool, is));
+			AttributeInfo a = parseAttribute(constantPool, is);
+			// some are currently not parsed
+			if (a == null) {
+				continue;
+			}
+			if ("Code".equals(a.type)) {
+				info.codeAttr = (Code) a;
+			} else {
+				info.attributes.add(a);
+			}
 		}
 		return info;
 	}

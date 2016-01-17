@@ -15,11 +15,11 @@ public class ClassFile {
 	public List<AttributeInfo> attributes = new ArrayList<>();
 
 	public String getClassName() {
-		return constantPool[thisClassIndex].asString().replaceAll("/", ".");
+		return constantPool[thisClassIndex].asString();
 	}
 
 	public String getSuperClassName() {
-		return constantPool[superClassIndex].asString().replaceAll("/", ".");
+		return constantPool[superClassIndex].asString();
 	}
 
 	public String getSimpleName() {

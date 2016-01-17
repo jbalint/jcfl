@@ -12,13 +12,13 @@ public class Methodref extends ConstantPoolInfo {
 		return constantPool[classIndex].asString();
 	}
 
-	public String getNameAndType() {
-		return constantPool[nameAndTypeIndex].asString();
+	public NameAndType getNameAndType() {
+		return (NameAndType) constantPool[nameAndTypeIndex];
 	}
 
 	@Override
 	public String asString() {
-		return getClassName() + "." + getNameAndType();
+		return getClassName() + "." + getNameAndType().asString();
 	}
 
 	@Override
