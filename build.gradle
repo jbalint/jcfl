@@ -14,11 +14,17 @@ javadoc.options.encoding = "UTF-8"
 
 defaultTasks "build"
 
+version = "0.1"
+
 repositories {
   jcenter()
+  maven {
+      url "http://maven.stardog.com"
+  }
 }
 
 dependencies {
+	compile "com.complexible.stardog:client-snarl:4.0.1"
   testCompile "junit:junit:4.12"
 }
 
@@ -28,4 +34,12 @@ sourceSets {
       srcDir "src/main/java"
     }
   }
+}
+
+apply plugin: 'application'
+mainClassName = "java.util.prefs.Base64"
+applicationDefaultJvmArgs = ["-agentlib:yt=runfile=load1.lua"]
+
+run {
+	standardInput = System.in
 }
