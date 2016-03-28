@@ -25,6 +25,7 @@ repositories {
 
 dependencies {
 	compile "com.complexible.stardog:client-snarl:4.0.1"
+	compile files('/home/jbalint/tmp/yfiles-for-java-3.0TP4.jar')
   testCompile "junit:junit:4.12"
 }
 
@@ -37,8 +38,9 @@ sourceSets {
 }
 
 apply plugin: 'application'
-mainClassName = "java.util.prefs.Base64"
-applicationDefaultJvmArgs = ["-agentlib:yt=runfile=load1.lua"]
+//mainClassName = "java.util.prefs.Base64"
+//applicationDefaultJvmArgs = ["-agentlib:yt=runfile=load1.lua"]
+mainClassName = "com.jbalint.jora.proto.Explorer"
 
 run {
 	standardInput = System.in
