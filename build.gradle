@@ -25,7 +25,6 @@ repositories {
 
 dependencies {
 	compile "com.complexible.stardog:client-snarl:4.0.1"
-	compile files('/home/jbalint/tmp/yfiles-for-java-3.0TP4.jar')
   testCompile "junit:junit:4.12"
 }
 
@@ -36,6 +35,8 @@ sourceSets {
     }
   }
 }
+
+
 
 apply plugin: 'application'
 

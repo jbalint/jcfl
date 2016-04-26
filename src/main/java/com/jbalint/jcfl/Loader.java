@@ -235,7 +235,7 @@ public class Loader {
 		}
 		for (int i = 0; i < length; ++i) { is.read(); }
 		//throw new IllegalArgumentException("Unsupported attribute type: " + type);
-		System.err.println("Ignored " + type + " attribute");
+		// System.err.println("Ignored " + type + " attribute");
 		return null;
 	}
 
@@ -271,10 +271,10 @@ public class Loader {
 			}
 			cf.accessFlags = is.readUShort();
 			cf.thisClassIndex = is.readUShort();
-			cf.superClassIndex = is.readUShort();
+			cf.superclassIndex = is.readUShort();
 			int interfacesCount = is.readUShort();
 			for (int i = 0; i < interfacesCount; ++i) {
-				cf.interfaces.add(cf.constantPool[is.readUShort()]);
+				cf.interfaces.add((ClassInfo) cf.constantPool[is.readUShort()]);
 			}
 			int fieldsCount = is.readUShort();
 			for (int i = 0; i < fieldsCount; ++i) {

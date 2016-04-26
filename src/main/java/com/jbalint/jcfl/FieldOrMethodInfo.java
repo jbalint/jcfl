@@ -14,7 +14,8 @@ public class FieldOrMethodInfo {
 	// method-only fields
 	public Code codeAttr;
 	/**
-	 * List of methods called by this method. Defined after {@link analyzeCode()} has been called.
+	 * List of methods called by this method. Defined after {@link
+	 * analyzeCode()} has been called.
 	 */
 	public List<Methodref> calledMethods = new ArrayList<>();
 
@@ -269,7 +270,7 @@ public class FieldOrMethodInfo {
 					++i;
 				}
 				i += 4;
-				int npairs = ((code[i] & 0xFF) << 3) | ((code[i+1] & 0xFF) << 2) | ((code[i+2] & 0xFF) << 1) | (code[i+3] & 0xFF);
+				int npairs = ((code[i] & 0xFF) << 24) | ((code[i+1] & 0xFF) << 16) | ((code[i+2] & 0xFF) << 8) | (code[i+3] & 0xFF);
 				i += 4;
 				i += npairs * 8;
 				i--;
@@ -285,9 +286,9 @@ public class FieldOrMethodInfo {
 				}
 				i += 4;
 				// these are signed
-				int low = (code[i] << 3) | (code[i+1] << 2) | (code[i+2] << 1) | code[i+3];
+				int low = (code[i] << 24) | (code[i+1] << 16) | (code[i+2] << 8) | code[i+3];
 				i += 4;
-				int high = (code[i] << 3) | (code[i+1] << 2) | (code[i+2] << 1) | code[i+3];
+				int high = (code[i] << 24) | (code[i+1] << 16) | (code[i+2] << 8) | code[i+3];
 				i += 4;
 				i += 4 * (high - low + 1);
 				i--;
@@ -307,7 +308,7 @@ public class FieldOrMethodInfo {
 			case 0xb8: // invokestatic
 			case 0xb6: { // invokevirtual
 				i++;
-				int index = ((code[i] & 0xFF) << 1) | (code[i+1] & 0xFF);
+				int index = ((code[i] & 0xFF) << 8) | (code[i+1] & 0xFF);
 				calledMethods.add((Methodref) constantPool[index]);
 				i += 2;
 				i--;
