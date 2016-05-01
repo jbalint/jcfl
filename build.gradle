@@ -38,10 +38,13 @@ sourceSets {
 }
 
 apply plugin: 'application'
-//mainClassName = "java.util.prefs.Base64"
-//applicationDefaultJvmArgs = ["-agentlib:yt=runfile=load1.lua"]
-mainClassName = "com.jbalint.jora.proto.Explorer"
+
+// mainClassName = "java.util.prefs.Base64"
+// applicationDefaultJvmArgs = ["-agentlib:yt=runfile=load1.lua", "-agentpath:/home/jbalint/lib/oprofile/libjvmti_oprofile.so", "-XX:-Inline"]
+
+mainClassName = "com.jbalint.jora.proto.JarToRdf"
 
 run {
 	standardInput = System.in
+	args "$jar"
 }
