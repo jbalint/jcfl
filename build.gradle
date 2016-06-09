@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-	compile "com.complexible.stardog:client-snarl:4.0.1"
+	compile "com.complexible.stardog:client-snarl:4.1"
   testCompile "junit:junit:4.12"
 }
 
