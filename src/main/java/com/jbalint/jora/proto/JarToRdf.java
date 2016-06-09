@@ -17,8 +17,6 @@ import com.jbalint.jcfl.Loader;
 
 public class JarToRdf {
 	public static void main(String args[]) throws IOException {
-		Load1 loader = new Load1();
-
 		Model model = Models2.newModel();
 
 		JarFile f = new JarFile(args[0]);
