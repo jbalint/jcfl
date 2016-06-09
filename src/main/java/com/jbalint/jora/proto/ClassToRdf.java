@@ -19,6 +19,7 @@ import com.complexible.common.rdf.model.Namespaces;
 // http://rdf4j.org/sesame/2.7/apidocs/org/openrdf/model/package-summary.html
 import org.openrdf.model.BNode;
 import org.openrdf.model.IRI;
+import org.openrdf.model.Literal;
 import org.openrdf.model.Model;
 import org.openrdf.model.Resource;
 import org.openrdf.model.Namespace;
@@ -126,7 +127,21 @@ public class ClassToRdf {
 				} else if (cv.type == ConstantPoolInfo.InfoType.LONG) {
 					model.add(field, JAVAP("initialValue"), Values.literal(((LongInfo) cv).value));
 				} else if (cv.type == ConstantPoolInfo.InfoType.DOUBLE) {
-					model.add(field, JAVAP("initialValue"), Values.literal(((DoubleInfo) cv).value));
+                    // Stardog's `RDFWriters' serializes these incorrectly causing parse errors when loading
+                    // TODO they shouldn't be strings, but it's OK for the moment
+                    double v = ((DoubleInfo) cv).value;
+                    Literal l = Values.literal(v);
+                    if (Double.isNaN(v)) {
+                        l = Values.literal("NaN");//, StardogValueFactory.XSD.DOUBLE);
+                    } else if (v == Double.NEGATIVE_INFINITY) {
+                        l = Values.literal("-INF");//, StardogValueFactory.XSD.DOUBLE);
+                    } else if (v == Double.POSITIVE_INFINITY) {
+                        l = Values.literal("INF");//, StardogValueFactory.XSD.DOUBLE);
+                    } else if (v < 0 && v > -1) {
+                        // this one is odd, I get something like ..25e-1 for "-0.25"
+                        l = Values.literal("" + v);
+                    }
+					model.add(field, JAVAP("initialValue"), l);
 				} else {
 					throw new IllegalArgumentException("Unhandled constant type: " + cv.type + " (" + cv + ")");
 				}
