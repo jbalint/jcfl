@@ -1,0 +1,8 @@
+# ArrayList should show all inherited members when this query is run with reasoning
+select *
+where
+{
+    javap:java.util.ArrayList javap:hasMember ?m.
+    ?m rdfs:label ?label.
+    filter(!contains(?label, 'java/util/ArrayList'))
+}
