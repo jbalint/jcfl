@@ -1,0 +1,375 @@
+# stardog data add --named-graph "<http://jbalint/javap>" jora javap.ttl
+# stardog data remove --named-graph "<http://jbalint/javap>"  jora && stardog data add --named-graph "<http://jbalint/javap>" jora javap.ttl 
+# baseURI: http://jbalint/javap#
+
+# TODO:
+# - some way to represent inner classes
+# - lambas
+# - higher level representation of idioms
+
+@prefix javap: <http://jbalint/javap#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://jbalint/javap>
+  rdf:type owl:Ontology ;
+.
+
+#### types
+javap:boolean
+  a javap:PrimitiveType ;
+  javap:descriptorCode "Z"^^xsd:string ;
+.
+javap:byte
+  a javap:PrimitiveType ;
+  javap:descriptorCode "B"^^xsd:string ;
+.
+javap:char
+  a javap:PrimitiveType ;
+  javap:descriptorCode "C"^^xsd:string ;
+.
+javap:double
+  a javap:PrimitiveType ;
+  javap:descriptorCode "D"^^xsd:string ;
+.
+javap:float
+  a javap:PrimitiveType ;
+  javap:descriptorCode "F"^^xsd:string ;
+.
+javap:int
+  a javap:PrimitiveType ;
+  javap:descriptorCode "I"^^xsd:string ;
+.
+javap:intArray
+  a javap:PrimitiveType ;
+  javap:descriptorCode "[I"^^xsd:string ;
+.
+javap:intArrayArray
+  a javap:PrimitiveType ;
+  javap:descriptorCode "[[I"^^xsd:string ;
+.
+javap:long
+  a javap:PrimitiveType ;
+  javap:descriptorCode "J"^^xsd:string ;
+.
+javap:short
+  a javap:PrimitiveType ;
+  javap:descriptorCode "S"^^xsd:string ;
+.
+javap:void
+  a javap:PrimitiveType ;
+  javap:descriptorCode "V"^^xsd:string ;
+.
+
+#### modifiers
+
+javap:abstractMethod
+  a javap:Modifier ;
+.
+javap:final
+  a javap:Modifier ;
+.
+javap:interface
+  rdf:type javap:Modifier ;
+.
+javap:static
+  a javap:Modifier ;
+.
+javap:transient
+  a javap:Modifier ;
+.
+
+javap:packagePrivate
+  a javap:Visibility ;
+.
+javap:private
+  a javap:Visibility ;
+.
+javap:protected
+  a javap:Visibility ;
+.
+javap:public
+  a javap:Visibility ;
+.
+
+#### Classes
+
+javap:Argument
+    a owl:Class ;
+    rdfs:comment "Argument to a method." ;
+.
+javap:ArrayType
+    a owl:Class ;
+    rdfs:subClassOf javap:Class ;
+.
+javap:CheckedException
+  a owl:Class ;
+  rdfs:subClassOf javap:Exception ;
+.
+javap:Class
+  a owl:Class ;
+  rdfs:subClassOf javap:Type ;
+.
+javap:Exception
+  rdf:type owl:Class ;
+  rdfs:subClassOf javap:Class ;
+.
+javap:Interface
+  a owl:Class ;
+  rdfs:subClassOf javap:Class ;
+.
+javap:Method
+  a owl:Class ;
+.
+javap:Modifier
+  a owl:Class ;
+.
+javap:Package
+    a owl:Class ;
+.
+javap:PrimitiveType
+  a owl:Class ;
+  rdfs:comment "Type signatures available at: https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/types.html#type_signatures"^^xsd:string ;
+  rdfs:subClassOf javap:Type ;
+.
+javap:Type
+  a owl:Class ;
+.
+javap:UncheckedException
+  a owl:Class ;
+.
+javap:Variable
+  a owl:Class ;
+.
+javap:Visibility
+  a owl:Class ;
+.
+
+#### General Properties
+
+javap:hasMember
+  rdf:type owl:ObjectProperty ;
+  # rdfs:domain [
+  #     rdf:type owl:Class ;
+  #     owl:unionOf (
+  #         javap:Method
+  #         javap:Class
+  #       ) ;
+  #   ] ;
+.
+javap:memberOf
+    a owl:ObjectProperty ;
+    owl:inverseOf javap:hasMember ;
+.
+javap:refersTo
+    a owl:ObjectProperty ;
+    owl:inverseOf javap:referredToBy ;
+.
+javap:referredToBy
+    a owl:ObjectProperty ;
+    owl:inverseOf javap:refersTo ;
+.
+
+#### Methods (and Arguments) Properties
+
+javap:argument
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain javap:Method ;
+  rdfs:range javap:Argument ;
+.
+javap:arity
+    rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:domain javap:Method ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The arity (number of arguments) of a method" ;
+.
+javap:calledBy
+    a owl:ObjectProperty ;
+    owl:inverseOf javap:calls ;
+    owl:subPropertyOf javap:referredToBy ;
+.
+javap:calls
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain javap:Method ;
+  rdfs:range javap:Method ;
+  rdfs:comment "The `calls' property indicates that a method calls another method." ;
+  rdfs:subPropertyOf javap:refersTo ;
+.
+javap:descriptor
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain javap:Method ;
+  rdfs:range xsd:string ;
+.
+javap:position
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain javap:Argument ;
+  rdfs:range xsd:int ;
+  rdfs:comment "Position of an argument in a method's argument list" ;
+.
+javap:returns
+    a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf javap:refersTo ;
+    rdfs:domain javap:Method ;
+    rdfs:range javap:Type
+.
+javap:thrownBy
+    a owl:ObjectProperty ;
+    rdfs:subPropertyOf javap:referredToBy ;
+    rdfs:range javap:Method ;
+    rdfs:domain javap:Exception ;
+    owl:inverseOf javap:throws ;
+.
+javap:throws
+  a owl:ObjectProperty ;
+  rdfs:domain javap:Method ;
+  rdfs:range javap:Exception ;
+  rdfs:subPropertyOf javap:refersTo ;
+  owl:inverseOf javap:thrownBy
+.
+
+#### Package Properties
+
+javap:dependsUpon
+    a owl:ObjectProperty ;
+    owl:inverseOf javap:usedBy ;
+    rdfs:domain javap:Package ;
+    rdfs:range javap:Package ;
+    rdfs:command "The `dependsUpon' property indicates that some classes in a package directly refer to some classes in another package." ;
+    ## TODO : owl:propertyChainAxiom ()
+.
+javap:usedBy
+    a owl:ObjectProperty ;
+    owl:inverseOf javap:dependsUpon ;
+    rdfs:domain javap:Package ;
+    rdfs:range javap:Package ;
+    rdfs:command "The `usedBy' property indicates that some classes in a package directly are referred to by some classes in another package." ;
+.
+
+#### Type Properties
+
+javap:arrayOf
+    rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:domain javap:ArrayType ;
+    rdfs:range javap:Type ;
+    rdfs:comment "The type of elements in the array" ;
+.
+javap:descriptorCode
+    rdf:type owl:DatatypeProperty ;
+    rdfs:domain javap:Type ;
+    rdfs:range xsd:string ;
+.
+javap:dimensions
+    rdfs:type owl:DatatypeProperty ;
+    rdfs:domain javap:ArrayType ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The number of dimensions of an array" ;
+.
+
+#### Class Properties
+
+javap:implements
+  rdf:type owl:ObjectProperty ;
+  rdfs:domain javap:Class ;
+  rdfs:range javap:Interface ;
+.
+javap:subClassOf
+  a owl:TransitiveProperty ;
+  rdfs:domain javap:Class ;
+  rdfs:range javap:Class ;
+  owl:inverseOf javap:hasSubClass ;
+  rdfs:subPropertyOf javap:refersTo ;
+.
+javap:hasSubClass
+  a owl:TransitiveProperty ;
+  rdfs:domain javap:Class ;
+  rdfs:range javap:Class ;
+  owl:inverseOf javap:subClassOf ;
+  rdfs:subPropertyOf javap:referredToBy ;
+.
+
+######################
+
+javap:initialValue
+  rdf:type rdf:Property ;
+  rdfs:domain javap:Variable ;
+.
+javap:modifier
+  rdf:type owl:DatatypeProperty ;
+  # rdfs:domain [
+  #     rdf:type owl:Class ;
+  #     owl:unionOf (
+  #         javap:Method
+  #         javap:Variable
+  #         javap:Class
+  #       ) ;
+  #   ] ;
+  rdfs:range javap:Modifier ;
+.
+javap:name
+  rdf:type owl:DatatypeProperty ;
+  # rdfs:domain [
+  #     rdf:type owl:Class ;
+  #     owl:unionOf (
+  #         javap:Class
+  #         javap:Method
+  #         javap:Package
+  #         javap:Variable
+  #       ) ;
+  #   ] ;
+  rdfs:range xsd:string ;
+.
+javap:hasType
+  rdf:type owl:ObjectProperty ;
+  # rdfs:domain [
+  #     rdf:type owl:Class ;
+  #     owl:unionOf (
+  #         javap:Method
+  #         javap:Variable
+  #       ) ;
+  #   ] ;
+  rdfs:range javap:Type ;
+.
+javap:typeParameters
+  rdf:type owl:ObjectProperty ;
+.
+
+# How do classes refer to other classes?
+# 1. Member variable type (class or instance member)
+# 2. Method local variable type
+# 3. Method argument type
+# 4. Method call on type
+# 5. Method declares it may throw a type
+
+#####################
+# inheritance rules #
+#####################
+# http://localhost/mediawiki/index.php/JCFL#Inheritance_Rules
+
+# INHERIT 1: Propagate members to subclasses
+javap:hasMember
+    owl:propertyChainAxiom (javap:subClassOf javap:hasMember) ;
+.
+
+# INHERIT 2: Propagate "implements" relationships
+javap:implements
+    owl:propertyChainAxiom (javap:subClassOf javap:implements) ;
+.
+
+#########################################
+# lifting from granular to coarse types #
+#########################################
+# javap:refersTo
+#     owl:propertyChainAxiom (javap:refersTo javap:memberOf)
+# .
+
+# # COMPOSITION 1: Propagate domain of refersTo from granular members to coarse members
+# javap:refersTo
+#     owl:propertyChainAxiom (javap:hasMember javap:refersTo) ;
+# .
+
+# # COMPOSITION 2: Propagate range of refersTo from granular members to coarse members
+# javap:refersTo
+#     owl:propertyChainAxiom (javap:refersTo javap:memberOf) ;
+# .
