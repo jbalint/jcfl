@@ -89,7 +89,7 @@ public class Loader {
 		info.constantPool = constantPool;
 		int attributesCount = is.readUShort();
 		for (int i = 0; i < attributesCount; ++i) {
-			AttributeInfo a = parseAttribute(constantPool, is);
+			AttributeInfo a = AttributeInfo.parseAttribute(constantPool, is);
 			// some are currently not parsed
 			if (a == null) {
 				continue;
@@ -101,142 +101,6 @@ public class Loader {
 			}
 		}
 		return info;
-	}
-
-	private static AttributeInfo parseAttribute(ConstantPoolInfo constantPool[], UnsignedDataInputStream is) throws IOException {
-		int typeIndex = is.readUShort();
-		String type = constantPool[typeIndex].asString();
-		long length = is.readUInt();
-		if ("ConstantValue".equals(type)) {
-			ConstantValue info = new ConstantValue();
-			info.type = type;
-			info.constantValue = constantPool[is.readUShort()];
-			return info;
-		} else if ("Code".equals(type)) {
-			Code info = new Code();
-			info.type = type;
-			info.maxStack = is.readUShort();
-			info.maxLocals = is.readUShort();
-			long codeLength = is.readUInt();
-			info.code = new byte[(int) codeLength];
-			is.readFully(info.code);
-			int exceptionTableLength = is.readUShort();
-			info.exceptionTable = new Code.CodeException[exceptionTableLength];
-			for (int i = 0; i < exceptionTableLength; ++i) {
-				Code.CodeException exc = new Code.CodeException();
-				exc.startPc = is.readUShort();
-				exc.endPc = is.readUShort();
-				exc.handlerPc = is.readUShort();
-				exc.catchType = is.readUShort();
-				info.exceptionTable[i] = exc;
-			}
-			int attributesCount = is.readUShort();
-			for (int i = 0; i < attributesCount; ++i) {
-				info.attributes.add(parseAttribute(constantPool, is));
-			}
-			return info;
-		} else if ("StackMapTable".equals(type)) {
-			// skipped (TODO: implement if we ever need this)
-			for (int i = 0; i < length; ++i) { is.read(); }
-			return null;
-		} else if ("Exceptions".equals(type)) {
-			Exceptions info = new Exceptions();
-			info.type = type;
-			int numberOfExceptions = is.readUShort();
-			for (int i = 0; i < numberOfExceptions; ++i) {
-				info.exceptions.add((ClassInfo) constantPool[is.readUShort()]);
-			}
-			return info;
-		} else if ("BootstrapMethods".equals(type)) {
-		} else if ("InnerClasses".equals(type)) {
-			InnerClasses info = new InnerClasses();
-			info.type = type;
-			int numberOfClasses = is.readUShort();
-			for (int i = 0; i < numberOfClasses; ++i) {
-				InnerClasses.InnerClass inner = new InnerClasses.InnerClass();
-				inner.innerClassInfoIndex = is.readUShort();
-				inner.outerClassInfoIndex = is.readUShort();
-				inner.innerNameIndex = is.readUShort();
-				inner.innerClassAccessFlags = is.readUShort();
-				info.classes.add(inner);
-			}
-			return info;
-		} else if ("EnclosingMethod".equals(type)) {
-			EnclosingMethod info = new EnclosingMethod();
-			info.type = type;
-			info.clazz = (ClassInfo) constantPool[is.readUShort()];
-			// may be null
-			info.method = (NameAndType) constantPool[is.readUShort()];
-			return info;
-		} else if ("Synthetic".equals(type)) {
-			Synthetic info = new Synthetic();
-			info.type = type;
-			return info;
-		} else if ("Signature".equals(type)) {
-			Signature info = new Signature();
-			info.type = type;
-			info.signature = constantPool[is.readUShort()].asString();
-			return info;
-		} else if ("RuntimeVisibleAnnotations".equals(type)) {
-		} else if ("RuntimeInvisibleAnnotations".equals(type)) {
-		} else if ("RuntimeVisibleParameterAnnotations".equals(type)) {
-		} else if ("RuntimeInvisibleParameterAnnotations".equals(type)) {
-		} else if ("RuntimeVisibleTypeAnnotations".equals(type)) {
-		} else if ("RuntimeInvisibleTypeAnnotations".equals(type)) {
-		} else if ("AnnotationDefault".equals(type)) {
-		} else if ("MethodParameters".equals(type)) {
-		} else if ("SourceFile".equals(type)) {
-			SourceFile info = new SourceFile();
-			info.type = type;
-			info.sourceFile = constantPool[is.readUShort()].asString();
-			return info;
-		} else if ("SourceDebugExtension".equals(type)) {
-		} else if ("LineNumberTable".equals(type)) {
-			LineNumberTable info = new LineNumberTable();
-			info.type = type;
-			int lineNumberTableLength = is.readUShort();
-			for (int i = 0; i < lineNumberTableLength; ++i) {
-				int startPc = is.readUShort();
-				info.lineNumberTable.put(startPc, is.readUShort());
-			}
-			return info;
-		} else if ("LocalVariableTable".equals(type)) {
-			LocalVariableTable info = new LocalVariableTable();
-			info.type = type;
-			int localVariableTableLength = is.readUShort();
-			for (int i = 0; i < localVariableTableLength; ++i) {
-				LocalVariableTable.LocalVariable v = new LocalVariableTable.LocalVariable();
-				v.startPc = is.readUShort();
-				v.length = is.readUShort();
-				v.name = constantPool[is.readUShort()].asString();
-				v.descriptor = constantPool[is.readUShort()].asString();
-				v.index = is.readUShort();
-				info.localVariableTable.add(v);
-			}
-			return info;
-		} else if ("LocalVariableTypeTable".equals(type)) {
-			LocalVariableTypeTable info = new LocalVariableTypeTable();
-			info.type = type;
-			int localVariableTypeTableLength = is.readUShort();
-			for (int i = 0; i < localVariableTypeTableLength; ++i) {
-				LocalVariableTypeTable.LocalVariableType t = new LocalVariableTypeTable.LocalVariableType();
-				t.startPc = is.readUShort();
-				t.length = is.readUShort();
-				t.name = constantPool[is.readUShort()].asString();
-				t.signature = constantPool[is.readUShort()].asString();
-				t.index = is.readUShort();
-				info.localVariableTypeTable.add(t);
-			}
-			return info;
-		} else if ("Deprecated".equals(type)) {
-			Deprecated info = new Deprecated();
-			info.type = type;
-			return info;
-		}
-		for (int i = 0; i < length; ++i) { is.read(); }
-		//throw new IllegalArgumentException("Unsupported attribute type: " + type);
-		// System.err.println("Ignored " + type + " attribute");
-		return null;
 	}
 
 	public static ClassFile load(File file) throws IOException {
@@ -286,7 +150,7 @@ public class Loader {
 			}
 			int attributesCount = is.readUShort();
 			for (int i = 0; i < attributesCount; ++i) {
-				cf.attributes.add(parseAttribute(cf.constantPool, is));
+				cf.attributes.add(AttributeInfo.parseAttribute(cf.constantPool, is));
 			}
 		}
 		return cf;

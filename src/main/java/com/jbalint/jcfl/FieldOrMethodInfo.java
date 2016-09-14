@@ -1,7 +1,9 @@
 package com.jbalint.jcfl;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class FieldOrMethodInfo {
 	public char type;
@@ -11,11 +13,17 @@ public class FieldOrMethodInfo {
 	public List<AttributeInfo> attributes = new ArrayList<>();
 	public ConstantPoolInfo constantPool[];
 
+	static class Descriptor {
+		String returnType;
+		List<String> argumentTypes = new LinkedList<>();
+	}
+
+	private Descriptor descriptor;
+
 	// method-only fields
 	public Code codeAttr;
 	/**
-	 * List of methods called by this method. Defined after {@link
-	 * analyzeCode()} has been called.
+	 * List of methods called by this method. Defined after {@link #analyzeCode()} has been called.
 	 */
 	public List<Methodref> calledMethods = new ArrayList<>();
 
@@ -25,6 +33,63 @@ public class FieldOrMethodInfo {
 
 	public String getDescriptor() {
 		return constantPool[descriptorIndex].asString();
+	}
+
+	private static int arrayDepth(String s, int startIndex) {
+	    int end = startIndex;
+	    while (s.charAt(end++) == '[');
+        return end - startIndex - 1;
+    }
+
+	private void parseDescriptor() {
+		descriptor = new Descriptor();
+		String desc = constantPool[descriptorIndex].asString();
+		// start at 1 to skip first opening paren
+		for (int i = 1; i < desc.length(); /* increment inline */) {
+			if (desc.charAt(i) == ')') {
+				i++;
+				descriptor.returnType = desc.substring(i);
+                break;
+			} else {
+				switch (desc.charAt(i)) {
+					case '[':
+					    // need to look at first char after array depth prefix
+					    int d = arrayDepth(desc, i);
+                        if (desc.charAt(d + i) == 'L') {
+                            String type = desc.substring(i, desc.indexOf(';', d + i) + 1);
+                            i += type.length();
+                            descriptor.argumentTypes.add(type);
+                        } else {
+                            descriptor.argumentTypes.add(desc.substring(i, i + d + 1));
+                            i += d + 1;
+                        }
+                        break;
+					case 'L':
+						String type = desc.substring(i, desc.indexOf(';', i) + 1);
+						i += type.length();
+						descriptor.argumentTypes.add(type);
+						break;
+					default:
+						descriptor.argumentTypes.add(desc.substring(i, i+1));
+                        i++;
+						break;
+				}
+			}
+		}
+	}
+
+	public String getReturnTypeName() {
+		if (descriptor == null) {
+			parseDescriptor();
+		}
+		return descriptor.returnType;
+	}
+
+	public List<String> getArgumentTypeNames() {
+		if (descriptor == null) {
+			parseDescriptor();
+		}
+		return descriptor.argumentTypes;
 	}
 
 	public boolean isAbstract() {

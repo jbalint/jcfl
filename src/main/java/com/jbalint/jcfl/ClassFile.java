@@ -22,7 +22,7 @@ public class ClassFile {
 	public String getSuperclassName() {
 		if (constantPool[superclassIndex] == null) {
 			// this should only happen for java.lang.Object. just make it point to itself.
-			return "java/lang/Object;";
+			return "java/lang/Object";
 		} else {
 			return constantPool[superclassIndex].asString();
 		}

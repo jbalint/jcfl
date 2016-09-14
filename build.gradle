@@ -1,13 +1,14 @@
 buildscript {
-  repositories {
-    jcenter()
-  }
-  dependencies {
-    classpath "jdepend:jdepend:2.9.1"
-  }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "jdepend:jdepend:2.9.1"
+    }
 }
 
 apply plugin: "java"
+apply plugin: "idea"
 
 compileJava.options.encoding = "UTF-8"
 javadoc.options.encoding = "UTF-8"
@@ -17,26 +18,28 @@ defaultTasks "build"
 version = "0.1"
 
 repositories {
-  jcenter()
-  maven {
-      url "http://maven.stardog.com"
-  }
+    maven {
+        url "/home/jbalint/sw/java-sw/stardog/settings/mvn"
+    }
+    mavenLocal()
+    jcenter()
+    maven {
+        url "http://maven.stardog.com"
+    }
 }
 
 dependencies {
-	compile "com.complexible.stardog:client-snarl:4.1"
-  testCompile "junit:junit:4.12"
+	compile "com.complexible.stardog:client-snarl:4.2-SNAPSHO"
+    testCompile "junit:junit:4.12"
 }
 
 sourceSets {
-  main {
-    java {
-      srcDir "src/main/java"
+    main {
+        java {
+            srcDir "src/main/java"
+        }
     }
-  }
 }
-
-
 
 apply plugin: 'application'
 
