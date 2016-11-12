@@ -361,7 +361,7 @@ public class FieldOrMethodInfo {
 			}
 			case 0xc4: { // wide
 				i++;
-				if ((code[i] & 0xFF) == 0x84) { // iinc
+				if ((code[i++] & 0xFF) == 0x84) { // iinc_w
 					i += 4;
 				} else {
 					i += 2;
@@ -380,6 +380,9 @@ public class FieldOrMethodInfo {
 				break;
 			}
 			default:
+                // for (int j = 0; j < code.length; ++j) {
+                //     System.err.println(String.format("[%05d]: %02x", j, code[j] & 0xFF));
+                // }
 				throw new IllegalArgumentException(String.format("Unknown instruction byte '0x%02x' at code[%d]", code[i] & 0xFF, i));
 			}
 		}
