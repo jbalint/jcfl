@@ -1,0 +1,22 @@
+## Find methods which act upon ?searchClass. ##
+
+# either accept a argument of type ?searchClass or return
+# an object of type ?searchClass
+select ?element ?function where {
+  bind(javap:java.lang.ClassLoader as ?searchClass)
+  {
+    ?methodArg javap:hasType ?searchClass.
+    ?method javap:argument ?methodArg.
+    bind("has argument" as ?function)
+  }
+  union
+  {
+    ?method javap:returns ?searchClass.
+    bind("returns" as ?function)
+  }
+  ?method a javap:Method.
+  ?method javap:name ?name.
+  ?class javap:hasMember ?method.
+  ?class javap:name ?className.
+  bind(concat(stardog:functions:localname(?class), ".", ?name, "()") as ?element)
+}
