@@ -18,4 +18,9 @@ public class ConstantValue extends AttributeInfo {
 	public String toString() {
 		return "Constant: " + constantValue.asString();
 	}
+
+    @Override
+    public <T> T accept(AttributeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

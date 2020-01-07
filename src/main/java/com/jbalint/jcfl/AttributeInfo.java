@@ -1,9 +1,21 @@
 package com.jbalint.jcfl;
 
 import java.io.IOException;
+import java.util.HashSet;
 
 public abstract class AttributeInfo {
 	public String type;
+
+    static HashSet<String> ignoredTypes = new HashSet<>();
+
+    public <T> T accept(AttributeVisitor<T> visitor) {
+        if (!ignoredTypes.contains(this.type)) {
+            ignoredTypes.add(this.type);
+            System.out.println("(ignored method attribute type=" + this.type + ")");
+        }
+
+        return null;
+    }
 
     public static AttributeInfo parseAttribute(ConstantPoolInfo constantPool[], UnsignedDataInputStream is) throws IOException {
         int typeIndex = is.readUShort();

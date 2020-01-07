@@ -7,4 +7,9 @@ public class SourceFile extends AttributeInfo {
 	public String toString() {
 		return type + ": " + sourceFile;
 	}
+    
+    @Override
+    public <T> T accept(AttributeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

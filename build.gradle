@@ -7,6 +7,10 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.github.johnrengelman.shadow" version "1.2.4"
+}
+
 apply plugin: "java"
 apply plugin: "idea"
 
@@ -29,7 +33,9 @@ repositories {
 }
 
 dependencies {
-	compile "com.complexible.stardog:client-snarl:4.2-SNAPSHO"
+	compile "com.complexible.stardog:client-snarl:4.2"
+    compile "org.slf4j:slf4j-log4j12:1.7.12"
+    compile "log4j:log4j:1.2.17"
     testCompile "junit:junit:4.12"
 }
 
@@ -46,9 +52,10 @@ apply plugin: 'application'
 // mainClassName = "java.util.prefs.Base64"
 // applicationDefaultJvmArgs = ["-agentlib:yt=runfile=load1.lua", "-agentpath:/home/jbalint/lib/oprofile/libjvmti_oprofile.so", "-XX:-Inline"]
 
-mainClassName = "com.jbalint.jora.proto.JarToRdf"
+//mainClassName = "com.jbalint.jora.proto.JarToRdf"
+mainClassName = "com.jbalint.jora.proto.JarDirToRdf"
 
 run {
 	standardInput = System.in
-	args "$jar"
+	args "$jardir", "$outfile"
 }

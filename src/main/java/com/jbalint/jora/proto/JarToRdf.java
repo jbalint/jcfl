@@ -2,18 +2,16 @@
 package com.jbalint.jora.proto;
 
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
-import java.util.function.Function;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.openrdf.model.Model;
 import com.complexible.common.openrdf.model.Models2;
-
 import com.jbalint.jcfl.ClassFile;
 import com.jbalint.jcfl.Loader;
+import org.openrdf.model.Model;
 
 /**
  * Read a JAR file and convert all classes to javap RDF
@@ -24,7 +22,7 @@ public class JarToRdf {
 		Model model = Models2.newModel();
 
 		JarFile f = new JarFile(args[0]);
-		System.err.println("Loading " + f.size() + " classes from " + f);
+		System.err.println("Loading " + f.size() + " classes from " + args[0]);
 
 		// can't do this with stream() because of all the IOException
 		for (JarEntry e : Collections.list(f.entries())) {

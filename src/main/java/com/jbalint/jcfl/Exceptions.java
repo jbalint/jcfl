@@ -26,4 +26,9 @@ public class Exceptions extends AttributeInfo {
 		sb.append("]");
 		return sb.toString();
 	}
+
+    @Override
+    public <T> T accept(AttributeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

@@ -80,16 +80,17 @@ public class Loader {
 		throw new IllegalArgumentException("Unknown constant pool tag: " + tag);
 	}
 
-	private static FieldOrMethodInfo parseFieldOrMethodInfo(ConstantPoolInfo constantPool[], UnsignedDataInputStream is, char type) throws IOException {
+	private static FieldOrMethodInfo parseFieldOrMethodInfo(ClassFile cf, UnsignedDataInputStream is, char type) throws IOException {
 		FieldOrMethodInfo info = new FieldOrMethodInfo();
+        info.cf = cf;
 		info.type = type;
 		info.accessFlags = is.readUShort();
 		info.nameIndex = is.readUShort();
 		info.descriptorIndex = is.readUShort();
-		info.constantPool = constantPool;
+		info.constantPool = cf.constantPool;
 		int attributesCount = is.readUShort();
 		for (int i = 0; i < attributesCount; ++i) {
-			AttributeInfo a = AttributeInfo.parseAttribute(constantPool, is);
+			AttributeInfo a = AttributeInfo.parseAttribute(cf.constantPool, is);
 			// some are currently not parsed
 			if (a == null) {
 				continue;
@@ -142,11 +143,11 @@ public class Loader {
 			}
 			int fieldsCount = is.readUShort();
 			for (int i = 0; i < fieldsCount; ++i) {
-				cf.fieldsAndMethods.add(parseFieldOrMethodInfo(cf.constantPool, is, 'F'));
+				cf.fieldsAndMethods.add(parseFieldOrMethodInfo(cf, is, 'F'));
 			}
 			int methodsCount = is.readUShort();
 			for (int i = 0; i < methodsCount; ++i) {
-				cf.fieldsAndMethods.add(parseFieldOrMethodInfo(cf.constantPool, is, 'M'));
+				cf.fieldsAndMethods.add(parseFieldOrMethodInfo(cf, is, 'M'));
 			}
 			int attributesCount = is.readUShort();
 			for (int i = 0; i < attributesCount; ++i) {

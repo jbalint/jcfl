@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class FieldOrMethodInfo {
+    public ClassFile cf;
 	public char type;
 	public int accessFlags;
 	public int nameIndex;
@@ -325,7 +326,6 @@ public class FieldOrMethodInfo {
 				i += 2;
 				break;
 			case 0xba: // invokedynamic
-			case 0xb9: // invokeinterface
 			case 0xc9: // jsr_w
 				i += 4;
 				break;
@@ -349,12 +349,34 @@ public class FieldOrMethodInfo {
 				while ((i % 4) != 0) {
 					++i;
 				}
+                int theDefault = (code[i] << 24) | ((code[i+1] & 0xff) << 16) | ((code[i+2] & 0xff) << 8) | (code[i+3] & 0xff);
 				i += 4;
 				// these are signed
-				int low = (code[i] << 24) | (code[i+1] << 16) | (code[i+2] << 8) | code[i+3];
+				int low = (code[i] << 24) | ((code[i+1] & 0xff) << 16) | ((code[i+2] & 0xff) << 8) | (code[i+3] & 0xff);
 				i += 4;
-				int high = (code[i] << 24) | (code[i+1] << 16) | (code[i+2] << 8) | code[i+3];
+				int high = (code[i] << 24) | ((code[i+1] & 0xff) << 16) | ((code[i+2] & 0xff) << 8) | (code[i+3] & 0xff);
 				i += 4;
+                if (high != 3) {
+                    if (high < low) {
+                        System.err.println(String.format("def=%d, low=%d, high=%d\n", theDefault, low, high));
+                        System.err.printf("\nDefault: ");
+                        for (int j = i - 12; j < i - 8; ++j) {
+                            System.err.printf("%02x ", code[j]);
+                        }
+                        System.err.printf("\nlow: ");
+                        for (int j = i - 8; j < i - 4; ++j) {
+                            System.err.printf("%02x ", code[j]);
+                        }
+                        System.err.printf("\nhigh: ");
+                        for (int j = i - 4; j < i; ++j) {
+                            System.err.printf("%02x ", code[j]);
+                        }
+                        System.err.printf("\n");
+                    }
+                }
+                if (high < low) {
+                    throw new IllegalArgumentException(String.format("tableswitch high(%d) < low(%d) at code[%d]", high, low, i));
+                }
 				i += 4 * (high - low + 1);
 				i--;
 				break;
@@ -369,6 +391,7 @@ public class FieldOrMethodInfo {
 				i--;
 				break;
 			}
+			case 0xb9: // invokeinterface
 			case 0xb7: // invokespecial
 			case 0xb8: // invokestatic
 			case 0xb6: { // invokevirtual
@@ -391,6 +414,7 @@ public class FieldOrMethodInfo {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+        sb.append(cf.getClassName()).append(" - ");
 		if (type == 'F') {
 			sb.append("Field: ").append(getName()).append(" : ").append(getDescriptor());
 		} else if (type == 'M') {

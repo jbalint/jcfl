@@ -1,7 +1,8 @@
 ## Find methods which act upon ?searchClass. ##
 
-# either accept a argument of type ?searchClass or return
-# an object of type ?searchClass
+# Find method which either accept an argument of type ?searchClass
+# or return an object of type ?searchClass
+
 select ?element ?function where {
   bind(javap:java.lang.ClassLoader as ?searchClass)
   {
@@ -20,3 +21,16 @@ select ?element ?function where {
   ?class javap:name ?className.
   bind(concat(stardog:functions:localname(?class), ".", ?name, "()") as ?element)
 }
+
+# This returns a result like:
+# +----------------------------------------------------------------------------------+----------------+
+# |                                     element                                      |    function    |
+# +----------------------------------------------------------------------------------+----------------+
+# | "java.io.ObjectInputStream.latestUserDefinedLoader()"                            | "returns"      |
+# | "java.lang.Class.checkPackageAccess()"                                           | "has argument" |
+# | "java.lang.Class.getClassLoader()"                                               | "returns"      |
+# | "java.lang.Class.getClassLoader0()"                                              | "returns"      |
+# | "java.lang.Class.forName0()"                                                     | "has argument" |
+# | "java.lang.Class.<init>()"                                                       | "has argument" |
+# | "java.lang.Class.forName()"                                                      | "has argument" |
+# | "javax.swing.UIDefaults.getUIClass()"                                            | "has argument" |

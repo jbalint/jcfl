@@ -31,4 +31,9 @@ public class LocalVariableTable extends AttributeInfo {
 		}
 		return info;
 	}
+
+    @Override
+    public <T> T accept(AttributeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

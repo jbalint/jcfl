@@ -1,22 +1,46 @@
 package com.jbalint.jora.proto;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
 import com.complexible.common.openrdf.model.Models2;
 import com.complexible.common.rdf.model.Namespaces;
 import com.complexible.common.rdf.model.StardogValueFactory;
 import com.complexible.common.rdf.model.Values;
 import com.complexible.common.rdf.rio.RDFWriters;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.jbalint.jcfl.*;
-import org.openrdf.model.*;
+import com.jbalint.jcfl.AttributeInfo;
+import com.jbalint.jcfl.AttributeVisitor;
+import com.jbalint.jcfl.ClassFile;
+import com.jbalint.jcfl.ClassInfo;
+import com.jbalint.jcfl.Code;
+import com.jbalint.jcfl.ConstantPoolInfo;
+import com.jbalint.jcfl.ConstantValue;
+import com.jbalint.jcfl.Deprecated;
+import com.jbalint.jcfl.DoubleInfo;
+import com.jbalint.jcfl.Exceptions;
+import com.jbalint.jcfl.FieldOrMethodInfo;
+import com.jbalint.jcfl.FloatInfo;
+import com.jbalint.jcfl.InnerClasses;
+import com.jbalint.jcfl.IntegerInfo;
+import com.jbalint.jcfl.LineNumberTable;
+import com.jbalint.jcfl.LocalVariableTable;
+import com.jbalint.jcfl.LocalVariableTypeTable;
+import com.jbalint.jcfl.LongInfo;
+import com.jbalint.jcfl.SourceFile;
+import org.openrdf.model.BNode;
+import org.openrdf.model.IRI;
+import org.openrdf.model.Literal;
+import org.openrdf.model.Model;
+import org.openrdf.model.Namespace;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.turtle.TurtleWriterFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.util.*;
 
 // http://rdf4j.org/sesame/2.7/apidocs/org/openrdf/model/package-summary.html
 
@@ -101,15 +125,13 @@ public class ClassToRdf {
             model.add(arg, JAVAP("hasType"), getTypeIndividual(model, fmInfo.getArgumentTypeNames().get(i)));
 		}
 		for (AttributeInfo a : fmInfo.attributes) {
-			if (!ignoredTypes.contains(a.type)) {
-				System.out.println("(ignored method attribute type=" + a.type + ")");
-				ignoredTypes.add(a.type);
-			}
+            a.accept(new AttributeConstructor(model, method));
 		}
 	}
 
 	private static void constructField(Model model, String className, FieldOrMethodInfo fmInfo) {
 		IRI field = fieldIri(className, fmInfo.getName());
+		model.add(classIri(className), JAVAP("hasMember"), field);
 		model.add(field, RDF.TYPE, JAVAP("Variable"));
 		model.add(field, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + ":" + fmInfo.getDescriptor()));
 		model.add(field, JAVAP("name"), Values.literal(fmInfo.getName()));
@@ -213,5 +235,67 @@ public class ClassToRdf {
 		namespaces.add(vf.createNamespace("javap", "http://jbalint/javap#"));
 
 		RDFWriters.write(m, RDFFormat.TURTLE, namespaces, output);
+	}
+
+	private static class AttributeConstructor implements AttributeVisitor {
+
+		private final Model mModel;
+
+		private final IRI mMethod;
+
+		public AttributeConstructor(final Model model, final IRI theMethod) {
+			mModel = model;
+			mMethod = theMethod;
+		}
+
+		@Override
+		public Object visit(final ConstantValue attribute) {
+			return null;
+		}
+
+		@Override
+		public Object visit(final Code attribute) {
+			return null;
+		}
+
+		@Override
+		public Object visit(final Deprecated attribute) {
+			mModel.add(mMethod, RDF.TYPE, JAVAP("Deprecated"));
+			return null;
+		}
+
+		@Override
+		public Object visit(final InnerClasses attribute) {
+			return null;
+		}
+
+		@Override
+		public Object visit(final LineNumberTable attribute) {
+			return null;
+		}
+
+		@Override
+		public Object visit(final LocalVariableTable attribute) {
+			return null;
+		}
+
+		@Override
+		public Object visit(final LocalVariableTypeTable attribute) {
+			return null;
+		}
+
+		@Override
+		public Object visit(final SourceFile attribute) {
+			mModel.add(mMethod, JAVAP("sourceFile"), Values.literal(attribute.sourceFile));
+			return null;
+		}
+
+		@Override
+		public Object visit(final Exceptions attribute) {
+			for (ClassInfo thrownClass : attribute.exceptions) {
+				mModel.add(mMethod, JAVAP("throws"), classIri(thrownClass.asString()));
+			}
+			return null;
+		}
 	}
 }

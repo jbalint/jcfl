@@ -42,4 +42,9 @@ public class Code extends AttributeInfo {
         }
         return info;
     }
+
+    @Override
+    public <T> T accept(AttributeVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

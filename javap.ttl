@@ -4,7 +4,7 @@
 
 # TODO:
 # - some way to represent inner classes
-# - lambas
+# - lambdas
 # - higher level representation of idioms
 
 @prefix javap: <http://jbalint/javap#> .
@@ -111,6 +111,9 @@ javap:CheckedException
 javap:Class
   a owl:Class ;
   rdfs:subClassOf javap:Type ;
+.
+javap:Deprecated
+  a owl:Class ;
 .
 javap:Exception
   rdf:type owl:Class ;
@@ -269,6 +272,12 @@ javap:dimensions
 
 #### Class Properties
 
+javap:sourceFile
+  rdf:type owl:DatatypeProperty ;
+  rdfs:domain javap:Class ;
+  rdfs:range xsd:string ;
+  rdfs:comment "The source filename that this class was compiled from" ;
+.
 javap:implements
   rdf:type owl:ObjectProperty ;
   rdfs:domain javap:Class ;
@@ -345,7 +354,7 @@ javap:typeParameters
 #####################
 # inheritance rules #
 #####################
-# http://localhost/mediawiki/index.php/JCFL#Inheritance_Rules
+# https://localhost/mediawiki/index.php/JCFL#Inheritance_Rules
 
 # INHERIT 1: Propagate members to subclasses
 javap:hasMember

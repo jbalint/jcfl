@@ -1,0 +1,15 @@
+Some miscellaneous SPARQL queries
+
+* Find callers of Guava
+  + Find methods which call a Guava method, which aren't Guava methods
+    themselves.
+  + Guava methods are defined as methods belonging to a class in a
+    package which contains the string "google".
+#+BEGIN_SRC sparql
+  select distinct ?callerClass where {
+    ?caller javap:calls ?callee.
+    ?callerClass javap:hasMember ?caller.
+    filter(contains(str(?callee), "google"))
+    filter(!contains(str(?caller), "google"))
+  }
+#+END_SRC
