@@ -6,23 +6,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import com.complexible.common.openrdf.model.Models2;
+import com.complexible.common.base.Streams;
+import com.stardog.stark.Statement;
+
 import com.google.common.io.Files;
 import com.jbalint.jcfl.ClassFile;
 import com.jbalint.jcfl.Loader;
-import org.openrdf.model.Model;
 
 /**
- * Created by jbalint on 2017/06/10.
+ * Parse a dir containing JARs to RDF
  */
 public class JarDirToRdf {
 
-	static Model jarToRdf(File rawFile) {
+	static Set<Statement> jarToRdf(File rawFile) {
 		try {
-			Model model = Models2.newModel();
+			Set<Statement> model = new HashSet<>();
 			JarFile f = new JarFile(rawFile);
 			System.err.println("Loading " + f.size() + " classes from " + rawFile);
 
@@ -50,11 +53,11 @@ public class JarDirToRdf {
 		System.err.println("Analyzing " + dir.getName() + " with output to " + args[1].toString());
 		FileOutputStream fos = new FileOutputStream(outfile);
 
-		Files.fileTreeTraverser()
-		     .postOrderTraversal(dir)
-		     .filter(f -> f.isFile() && f.getName().endsWith(".jar"))
-		     .transform(JarDirToRdf::jarToRdf)
-		     .forEach(m -> ClassToRdf.writeN3String(m, fos));
+		Streams.stream(Files.fileTraverser()
+		                    .depthFirstPostOrder(dir))
+		       .filter(f -> f.isFile() && f.getName().endsWith(".jar"))
+		       .map(JarDirToRdf::jarToRdf)
+		       .forEach(m -> ClassToRdf.writeN3String(m, fos));
 
 		fos.close();
 	}

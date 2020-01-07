@@ -7,12 +7,21 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import com.complexible.common.openrdf.model.Models2;
-import com.complexible.common.rdf.model.Namespaces;
-import com.complexible.common.rdf.model.StardogValueFactory;
-import com.complexible.common.rdf.model.Values;
-import com.complexible.common.rdf.rio.RDFWriters;
+import com.stardog.stark.BNode;
+import com.stardog.stark.IRI;
+import com.stardog.stark.Literal;
+import com.stardog.stark.Namespace;
+import com.stardog.stark.Namespaces;
+import com.stardog.stark.Statement;
+import com.stardog.stark.Values;
+import com.stardog.stark.io.RDFFormat;
+import com.stardog.stark.io.RDFFormats;
+import com.stardog.stark.io.RDFWriters;
+import com.stardog.stark.vocabs.RDF;
+import com.stardog.stark.vocabs.RDFS;
+
 import com.google.common.collect.ImmutableMap;
 import com.jbalint.jcfl.AttributeInfo;
 import com.jbalint.jcfl.AttributeVisitor;
@@ -33,17 +42,10 @@ import com.jbalint.jcfl.LocalVariableTable;
 import com.jbalint.jcfl.LocalVariableTypeTable;
 import com.jbalint.jcfl.LongInfo;
 import com.jbalint.jcfl.SourceFile;
-import org.openrdf.model.BNode;
-import org.openrdf.model.IRI;
-import org.openrdf.model.Literal;
-import org.openrdf.model.Model;
-import org.openrdf.model.Namespace;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
-import org.openrdf.rio.RDFFormat;
 
-// http://rdf4j.org/sesame/2.7/apidocs/org/openrdf/model/package-summary.html
-
+/**
+ * Serialize a (parsed) Class to RDF
+ */
 public class ClassToRdf {
 	static IRI JAVAP(String name) {
 		return Values.iri("http://jbalint/javap#" + java.net.URLEncoder.encode(name));
@@ -75,7 +77,7 @@ public class ClassToRdf {
 
     static Map<String, IRI> arrayTypeCache = new HashMap<>();
 
-    private static IRI getTypeIndividual(Model model, String typeName) {
+    private static IRI getTypeIndividual(Set<Statement> model, String typeName) {
         if (constantTypes.containsKey(typeName)) {
             return constantTypes.get(typeName);
         }
@@ -96,8 +98,8 @@ public class ClassToRdf {
                 elementClassName = typeName.substring(dims);
             }
             IRI typeIri = classIri(elementClassName + new String(new char[dims]).replace("\0", "[]"));
-            model.add(typeIri, JAVAP("dimensions"), Values.literal(dims));
-            model.add(typeIri, JAVAP("arrayOf"), classIri(elementClassName));
+            model.add(Values.statement(typeIri, JAVAP("dimensions"), Values.literal(dims)));
+            model.add(Values.statement(typeIri, JAVAP("arrayOf"), classIri(elementClassName)));
             return typeIri;
         } else {
             // extract `name' from `Lname;'
@@ -105,49 +107,49 @@ public class ClassToRdf {
         }
     }
 
-	private static void constructMethod(Model model, String className, FieldOrMethodInfo fmInfo) {
+	private static void constructMethod(Set<Statement> model, String className, FieldOrMethodInfo fmInfo) {
 		IRI method = methodIri(className, fmInfo.getName(), fmInfo.getDescriptor());
-		model.add(classIri(className), JAVAP("hasMember"), method);
-		model.add(method, RDF.TYPE, JAVAP("Method"));
-		model.add(method, JAVAP("name"), Values.literal(fmInfo.getName()));
-		model.add(method, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + fmInfo.getDescriptor()));
-		model.add(method, JAVAP("descriptor"), Values.literal(fmInfo.getDescriptor()));
+		model.add(Values.statement(classIri(className), JAVAP("hasMember"), method));
+		model.add(Values.statement(method, RDF.TYPE, JAVAP("Method")));
+		model.add(Values.statement(method, JAVAP("name"), Values.literal(fmInfo.getName())));
+		model.add(Values.statement(method, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + fmInfo.getDescriptor())));
+		model.add(Values.statement(method, JAVAP("descriptor"), Values.literal(fmInfo.getDescriptor())));
         fmInfo.calledMethods.stream()
                 .map(mr -> methodIri(mr.getClassName(), mr.getNameAndType().getName(), mr.getNameAndType().getDescriptor()))
-                .forEach(iri -> model.add(method, JAVAP("calls"), iri));
-        model.add(method, JAVAP("returns"), getTypeIndividual(model, fmInfo.getReturnTypeName()));
-		model.add(method, JAVAP("arity"), Values.literal(fmInfo.getArgumentTypeNames().size()));
+                .forEach(iri -> model.add(Values.statement(method, JAVAP("calls"), iri)));
+        model.add(Values.statement(method, JAVAP("returns"), getTypeIndividual(model, fmInfo.getReturnTypeName())));
+		model.add(Values.statement(method, JAVAP("arity"), Values.literal(fmInfo.getArgumentTypeNames().size())));
         for (int i = 0; i < fmInfo.getArgumentTypeNames().size(); ++i) {
             BNode arg = Values.bnode();
-            model.add(method, JAVAP("argument"), arg);
-            model.add(arg, RDF.TYPE, JAVAP("Argument"));
-            model.add(arg, JAVAP("position"), Values.literal(i));
-            model.add(arg, JAVAP("hasType"), getTypeIndividual(model, fmInfo.getArgumentTypeNames().get(i)));
+            model.add(Values.statement(method, JAVAP("argument"), arg));
+            model.add(Values.statement(arg, RDF.TYPE, JAVAP("Argument")));
+            model.add(Values.statement(arg, JAVAP("position"), Values.literal(i)));
+            model.add(Values.statement(arg, JAVAP("hasType"), getTypeIndividual(model, fmInfo.getArgumentTypeNames().get(i))));
 		}
 		for (AttributeInfo a : fmInfo.attributes) {
             a.accept(new AttributeConstructor(model, method));
 		}
 	}
 
-	private static void constructField(Model model, String className, FieldOrMethodInfo fmInfo) {
+	private static void constructField(Set<Statement> model, String className, FieldOrMethodInfo fmInfo) {
 		IRI field = fieldIri(className, fmInfo.getName());
-		model.add(classIri(className), JAVAP("hasMember"), field);
-		model.add(field, RDF.TYPE, JAVAP("Variable"));
-		model.add(field, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + ":" + fmInfo.getDescriptor()));
-		model.add(field, JAVAP("name"), Values.literal(fmInfo.getName()));
-        model.add(field, JAVAP("hasType"), getTypeIndividual(model, fmInfo.getDescriptor()));
+		model.add(Values.statement(classIri(className), JAVAP("hasMember"), field));
+		model.add(Values.statement(field, RDF.TYPE, JAVAP("Variable")));
+		model.add(Values.statement(field, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + ":" + fmInfo.getDescriptor())));
+		model.add(Values.statement(field, JAVAP("name"), Values.literal(fmInfo.getName())));
+        model.add(Values.statement(field, JAVAP("hasType"), getTypeIndividual(model, fmInfo.getDescriptor())));
         // TODO type
 		for (AttributeInfo a : fmInfo.attributes) {
 			if (a.type.equals("ConstantValue")) {
 				ConstantPoolInfo cv = ((ConstantValue) a).constantValue;
 				if (cv.type == ConstantPoolInfo.InfoType.STRING) {
-					model.add(field, JAVAP("initialValue"), Values.literal(cv.asString()));
+					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(cv.asString())));
 				} else if (cv.type == ConstantPoolInfo.InfoType.INTEGER) {
-					model.add(field, JAVAP("initialValue"), Values.literal(((IntegerInfo) cv).value));
+					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(((IntegerInfo) cv).value)));
 				} else if (cv.type == ConstantPoolInfo.InfoType.FLOAT) {
-					model.add(field, JAVAP("initialValue"), Values.literal(((FloatInfo) cv).value));
+					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(((FloatInfo) cv).value)));
 				} else if (cv.type == ConstantPoolInfo.InfoType.LONG) {
-					model.add(field, JAVAP("initialValue"), Values.literal(((LongInfo) cv).value));
+					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(((LongInfo) cv).value)));
 				} else if (cv.type == ConstantPoolInfo.InfoType.DOUBLE) {
 					// Stardog's `RDFWriters' serializes these incorrectly causing parse errors when loading
 					// TODO they shouldn't be strings, but it's OK for the moment
@@ -163,7 +165,7 @@ public class ClassToRdf {
 						// this one is odd, I get something like ..25e-1 for "-0.25"
 						l = Values.literal("" + v);
 					}
-					model.add(field, JAVAP("initialValue"), l);
+					model.add(Values.statement(field, JAVAP("initialValue"), l));
 
 					//model.add(field, JAVAP("initialValue"), Values.literal(((DoubleInfo) cv).value));
 				} else {
@@ -179,22 +181,22 @@ public class ClassToRdf {
 	}
 	static HashSet<String> ignoredTypes = new HashSet<>();
 
-	public static Model toRdf(ClassFile cf) {
-		Model model = Models2.newModel();
+	public static Set<Statement> toRdf(ClassFile cf) {
+		Set<Statement> model = new HashSet<>();
 		toRdf(model, cf);
 		return model;
 	}
 
-	public static void toRdf(Model model, ClassFile cf) {
+	public static void toRdf(Set<Statement> model, ClassFile cf) {
 		IRI classIri = classIri(cf.getClassName());
-		model.add(classIri, RDF.TYPE, JAVAP("Class"));
-		model.add(classIri, RDFS.LABEL, Values.literal(cf.getClassName()));
-		model.add(classIri, JAVAP("name"), Values.literal(cf.getClassName()));
+		model.add(Values.statement(classIri, RDF.TYPE, JAVAP("Class")));
+		model.add(Values.statement(classIri, RDFS.LABEL, Values.literal(cf.getClassName())));
+		model.add(Values.statement(classIri, JAVAP("name"), Values.literal(cf.getClassName())));
 
-		model.add(classIri, JAVAP("subClassOf"), classIri(cf.getSuperclassName()));
+		model.add(Values.statement(classIri, JAVAP("subClassOf"), classIri(cf.getSuperclassName())));
 		cf.getInterfaces().stream()
 			.map(ClassToRdf::classIri)
-			.forEach(theInterface -> model.add(classIri, JAVAP("implements"), theInterface));
+			.forEach(theInterface -> model.add(Values.statement(classIri, JAVAP("implements"), theInterface)));
 
         // TODO add interface and other modifiers, visibility, local variables, throw declarations
 		for (FieldOrMethodInfo fm : cf.fieldsAndMethods) {
@@ -213,37 +215,33 @@ public class ClassToRdf {
 		}
 	}
 
-	public static String toN3String(Model m) {
-
-		StardogValueFactory vf = StardogValueFactory.instance();
+	public static String toN3String(Set<Statement> m) {
 
 		List<Namespace> namespaces = new ArrayList<>();
 		Namespaces.EXTENDED.forEach(namespaces::add);
-		namespaces.add(vf.createNamespace("javap", "http://jbalint/javap#"));
+		namespaces.add(Values.namespace("javap", "http://jbalint/javap#"));
 
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		RDFWriters.write(m, RDFFormat.N3, namespaces, output);
+		RDFWriters.write(output, RDFFormats.PRETTY_TURTLE, m, namespaces);
 		return new String(output.toByteArray());
 	}
 
-	public static void writeN3String(Model m, OutputStream output) {
-
-		StardogValueFactory vf = StardogValueFactory.instance();
+	public static void writeN3String(Set<Statement> m, OutputStream output) {
 
 		List<Namespace> namespaces = new ArrayList<>();
 		Namespaces.EXTENDED.forEach(namespaces::add);
-		namespaces.add(vf.createNamespace("javap", "http://jbalint/javap#"));
+		namespaces.add(Values.namespace("javap", "http://jbalint/javap#"));
 
-		RDFWriters.write(m, RDFFormat.TURTLE, namespaces, output);
+		RDFWriters.write(output, RDFFormats.PRETTY_TURTLE, m, namespaces);
 	}
 
 	private static class AttributeConstructor implements AttributeVisitor {
 
-		private final Model mModel;
+		private final Set<Statement> mModel;
 
 		private final IRI mMethod;
 
-		public AttributeConstructor(final Model model, final IRI theMethod) {
+		public AttributeConstructor(final Set<Statement> model, final IRI theMethod) {
 			mModel = model;
 			mMethod = theMethod;
 		}
@@ -260,7 +258,7 @@ public class ClassToRdf {
 
 		@Override
 		public Object visit(final Deprecated attribute) {
-			mModel.add(mMethod, RDF.TYPE, JAVAP("Deprecated"));
+			mModel.add(Values.statement(mMethod, RDF.TYPE, JAVAP("Deprecated")));
 			return null;
 		}
 
@@ -286,14 +284,14 @@ public class ClassToRdf {
 
 		@Override
 		public Object visit(final SourceFile attribute) {
-			mModel.add(mMethod, JAVAP("sourceFile"), Values.literal(attribute.sourceFile));
+			mModel.add(Values.statement(mMethod, JAVAP("sourceFile"), Values.literal(attribute.sourceFile)));
 			return null;
 		}
 
 		@Override
 		public Object visit(final Exceptions attribute) {
 			for (ClassInfo thrownClass : attribute.exceptions) {
-				mModel.add(mMethod, JAVAP("throws"), classIri(thrownClass.asString()));
+				mModel.add(Values.statement(mMethod, JAVAP("throws"), classIri(thrownClass.asString())));
 			}
 			return null;
 		}
