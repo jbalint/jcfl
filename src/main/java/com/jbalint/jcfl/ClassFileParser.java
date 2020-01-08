@@ -7,7 +7,10 @@ import java.io.IOException;
 
 import static com.jbalint.jcfl.ConstantPoolInfo.InfoType.*;
 
-public class Loader {
+/**
+ * Parse a binary class file to a {@link ClassFile} structure
+ */
+public class ClassFileParser {
 	private static boolean debug = false;
 
 	private static ConstantPoolInfo parseConstantPoolInfo(UnsignedDataInputStream is) throws IOException {
@@ -23,12 +26,12 @@ public class Loader {
 			return info;
 		} else if (tag == METHOD_REF.tag) {
 			Methodref info = new Methodref();
-			info.classIndex = is.readUShort();
+			info.classInfoIndex = is.readUShort();
 			info.nameAndTypeIndex = is.readUShort();
 			return info;
 		} else if (tag == INTERFACE_METHOD_REF.tag) {
 			InterfaceMethodref info = new InterfaceMethodref();
-			info.classIndex = is.readUShort();
+			info.classInfoIndex = is.readUShort();
 			info.nameAndTypeIndex = is.readUShort();
 			return info;
 		} else if (tag == STRING.tag) {
@@ -104,15 +107,15 @@ public class Loader {
 		return info;
 	}
 
-	public static ClassFile load(File file) throws IOException {
-		return load(new FileInputStream(file));
+	public static ClassFile parser(File file) throws IOException {
+		return parser(new FileInputStream(file));
 	}
 
 	/**
 	 * Load and parse a Java class file.
 	 */
 	// alias shell='java -Xcheck:jni -esa -agentlib:yt -classpath build/classes/main java.util.prefs.Base64'
-	public static ClassFile load(InputStream fileInputStream) throws IOException {
+	public static ClassFile parser(InputStream fileInputStream) throws IOException {
 		ClassFile cf = new ClassFile();
 		try (UnsignedDataInputStream is = new UnsignedDataInputStream(fileInputStream)) {
 			cf.magic = is.readInt();
@@ -135,8 +138,15 @@ public class Loader {
 				}
 			}
 			cf.accessFlags = is.readUShort();
-			cf.thisClassIndex = is.readUShort();
-			cf.superclassIndex = is.readUShort();
+			int classNameIndex = is.readUShort();
+			cf.className = cf.constantPool[classNameIndex].asString();
+			int superclassNameIndex = is.readUShort();
+			if (cf.constantPool[superclassNameIndex] == null) {
+				// this should only happen for java.lang.Object. just make it point to itself.
+				cf.superclassName = "java.lang.Object";
+			} else {
+				cf.superclassName = ClassBinaryName.binaryNameToClassName(cf.constantPool[superclassNameIndex].asString());
+			}
 			int interfacesCount = is.readUShort();
 			for (int i = 0; i < interfacesCount; ++i) {
 				cf.interfaces.add((ClassInfo) cf.constantPool[is.readUShort()]);
@@ -151,7 +161,10 @@ public class Loader {
 			}
 			int attributesCount = is.readUShort();
 			for (int i = 0; i < attributesCount; ++i) {
-				cf.attributes.add(AttributeInfo.parseAttribute(cf.constantPool, is));
+				AttributeInfo attr = AttributeInfo.parseAttribute(cf.constantPool, is);
+				if (attr != null) {
+					cf.attributes.add(attr);
+				}
 			}
 		}
 		return cf;

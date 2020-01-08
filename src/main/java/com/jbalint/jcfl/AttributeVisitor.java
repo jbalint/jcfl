@@ -10,4 +10,6 @@ public interface AttributeVisitor<T> {
     T visit(LocalVariableTable attribute);
     T visit(LocalVariableTypeTable attribute);
     T visit(SourceFile attribute);
+    T visit(RuntimeAnnotations attribute);
+    T visit(RuntimeAnnotation attribute);
 }

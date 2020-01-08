@@ -1,7 +1,7 @@
 package com.jbalint.jcfl;
 
 public class Methodref extends ConstantPoolInfo {
-	public int classIndex;
+	public int classInfoIndex;
 	public int nameAndTypeIndex;
 
 	public Methodref() {
@@ -9,7 +9,7 @@ public class Methodref extends ConstantPoolInfo {
 	}
 
 	public String getClassName() {
-		return constantPool[classIndex].asString();
+		return constantPool[classInfoIndex].asString();
 	}
 
 	public NameAndType getNameAndType() {

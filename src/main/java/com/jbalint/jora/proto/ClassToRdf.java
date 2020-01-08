@@ -16,7 +16,6 @@ import com.stardog.stark.Namespace;
 import com.stardog.stark.Namespaces;
 import com.stardog.stark.Statement;
 import com.stardog.stark.Values;
-import com.stardog.stark.io.RDFFormat;
 import com.stardog.stark.io.RDFFormats;
 import com.stardog.stark.io.RDFWriters;
 import com.stardog.stark.vocabs.RDF;
@@ -24,55 +23,41 @@ import com.stardog.stark.vocabs.RDFS;
 
 import com.google.common.collect.ImmutableMap;
 import com.jbalint.jcfl.AttributeInfo;
-import com.jbalint.jcfl.AttributeVisitor;
 import com.jbalint.jcfl.ClassFile;
-import com.jbalint.jcfl.ClassInfo;
-import com.jbalint.jcfl.Code;
 import com.jbalint.jcfl.ConstantPoolInfo;
 import com.jbalint.jcfl.ConstantValue;
-import com.jbalint.jcfl.Deprecated;
 import com.jbalint.jcfl.DoubleInfo;
-import com.jbalint.jcfl.Exceptions;
 import com.jbalint.jcfl.FieldOrMethodInfo;
 import com.jbalint.jcfl.FloatInfo;
-import com.jbalint.jcfl.InnerClasses;
 import com.jbalint.jcfl.IntegerInfo;
-import com.jbalint.jcfl.LineNumberTable;
-import com.jbalint.jcfl.LocalVariableTable;
-import com.jbalint.jcfl.LocalVariableTypeTable;
+import com.jbalint.jcfl.JcflVocab;
 import com.jbalint.jcfl.LongInfo;
-import com.jbalint.jcfl.SourceFile;
+
+import static com.jbalint.jcfl.JcflVocab.NS;
 
 /**
  * Serialize a (parsed) Class to RDF
  */
 public class ClassToRdf {
-	static IRI JAVAP(String name) {
-		return Values.iri("http://jbalint/javap#" + java.net.URLEncoder.encode(name));
-	}
-
-	static IRI classIri(String className) {
-		return JAVAP(className.replaceAll("/", "."));
-	}
 
 	static IRI methodIri(String className, String methodName, String methodSignature) {
-		return JAVAP(className.replaceAll("/", ".") + "." + methodName + methodSignature.replaceAll("/", "."));
+		return JcflVocab.JAVAP(className + "." + methodName + methodSignature.replaceAll("/", "."));
 	}
 
 	static IRI fieldIri(String className, String fieldName) {
-		return JAVAP(className.replaceAll("/", ".") + "." + fieldName);
+		return JcflVocab.JAVAP(className + "." + fieldName);
 	}
 
 	static Map<String, IRI> constantTypes = ImmutableMap.<String, IRI>builder()
-            .put("I", JAVAP("int"))
-            .put("J", JAVAP("long"))
-            .put("B", JAVAP("byte"))
-            .put("Z", JAVAP("boolean"))
-            .put("D", JAVAP("double"))
-            .put("F", JAVAP("float"))
-            .put("S", JAVAP("short"))
-            .put("C", JAVAP("char"))
-            .put("V", JAVAP("void"))
+            .put("I", JcflVocab.JAVAP("int"))
+            .put("J", JcflVocab.JAVAP("long"))
+            .put("B", JcflVocab.JAVAP("byte"))
+            .put("Z", JcflVocab.JAVAP("boolean"))
+            .put("D", JcflVocab.JAVAP("double"))
+            .put("F", JcflVocab.JAVAP("float"))
+            .put("S", JcflVocab.JAVAP("short"))
+            .put("C", JcflVocab.JAVAP("char"))
+            .put("V", JcflVocab.JAVAP("void"))
             .build();
 
     static Map<String, IRI> arrayTypeCache = new HashMap<>();
@@ -97,75 +82,62 @@ public class ClassToRdf {
             } else {
                 elementClassName = typeName.substring(dims);
             }
-            IRI typeIri = classIri(elementClassName + new String(new char[dims]).replace("\0", "[]"));
-            model.add(Values.statement(typeIri, JAVAP("dimensions"), Values.literal(dims)));
-            model.add(Values.statement(typeIri, JAVAP("arrayOf"), classIri(elementClassName)));
+            IRI typeIri = JcflVocab.classIri(elementClassName + new String(new char[dims]).replace("\0", "[]"));
+            model.add(Values.statement(typeIri, JcflVocab.JAVAP("dimensions"), Values.literal(dims)));
+            model.add(Values.statement(typeIri, JcflVocab.JAVAP("arrayOf"), JcflVocab.classIri(elementClassName)));
             return typeIri;
         } else {
             // extract `name' from `Lname;'
-            return classIri(typeName.substring(1, typeName.length() - 1));
+            return JcflVocab.classIri(typeName.substring(1, typeName.length() - 1));
         }
     }
 
 	private static void constructMethod(Set<Statement> model, String className, FieldOrMethodInfo fmInfo) {
-		IRI method = methodIri(className, fmInfo.getName(), fmInfo.getDescriptor());
-		model.add(Values.statement(classIri(className), JAVAP("hasMember"), method));
-		model.add(Values.statement(method, RDF.TYPE, JAVAP("Method")));
-		model.add(Values.statement(method, JAVAP("name"), Values.literal(fmInfo.getName())));
-		model.add(Values.statement(method, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + fmInfo.getDescriptor())));
-		model.add(Values.statement(method, JAVAP("descriptor"), Values.literal(fmInfo.getDescriptor())));
+		IRI method = methodIri(className, fmInfo.getName(), fmInfo.getDescriptorString());
+		model.add(Values.statement(JcflVocab.classIri(className), JcflVocab.JAVAP("hasMember"), method));
+		model.add(Values.statement(method, RDF.TYPE, JcflVocab.JAVAP("Method")));
+		model.add(Values.statement(method, JcflVocab.JAVAP("name"), Values.literal(fmInfo.getName())));
+		model.add(Values.statement(method, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + fmInfo.getDescriptorString())));
+		model.add(Values.statement(method, JcflVocab.JAVAP("descriptor"), Values.literal(fmInfo.getDescriptorString())));
         fmInfo.calledMethods.stream()
                 .map(mr -> methodIri(mr.getClassName(), mr.getNameAndType().getName(), mr.getNameAndType().getDescriptor()))
-                .forEach(iri -> model.add(Values.statement(method, JAVAP("calls"), iri)));
-        model.add(Values.statement(method, JAVAP("returns"), getTypeIndividual(model, fmInfo.getReturnTypeName())));
-		model.add(Values.statement(method, JAVAP("arity"), Values.literal(fmInfo.getArgumentTypeNames().size())));
+                .forEach(iri -> model.add(Values.statement(method, JcflVocab.JAVAP("calls"), iri)));
+        model.add(Values.statement(method, JcflVocab.JAVAP("returns"), getTypeIndividual(model, fmInfo.getReturnTypeName())));
+		model.add(Values.statement(method, JcflVocab.JAVAP("arity"), Values.literal(fmInfo.getArgumentTypeNames().size())));
         for (int i = 0; i < fmInfo.getArgumentTypeNames().size(); ++i) {
             BNode arg = Values.bnode();
-            model.add(Values.statement(method, JAVAP("argument"), arg));
-            model.add(Values.statement(arg, RDF.TYPE, JAVAP("Argument")));
-            model.add(Values.statement(arg, JAVAP("position"), Values.literal(i)));
-            model.add(Values.statement(arg, JAVAP("hasType"), getTypeIndividual(model, fmInfo.getArgumentTypeNames().get(i))));
+            model.add(Values.statement(method, JcflVocab.JAVAP("argument"), arg));
+            model.add(Values.statement(arg, RDF.TYPE, JcflVocab.JAVAP("Argument")));
+            model.add(Values.statement(arg, JcflVocab.JAVAP("position"), Values.literal(i)));
+            model.add(Values.statement(arg, JcflVocab.JAVAP("hasType"), getTypeIndividual(model, fmInfo.getArgumentTypeNames().get(i))));
 		}
-		for (AttributeInfo a : fmInfo.attributes) {
-            a.accept(new AttributeConstructor(model, method));
-		}
+		SerializeAttributes serializeAttributes = new SerializeAttributes(model, method);
+		fmInfo.attributes.forEach(attr -> attr.accept(serializeAttributes));
 	}
 
 	private static void constructField(Set<Statement> model, String className, FieldOrMethodInfo fmInfo) {
 		IRI field = fieldIri(className, fmInfo.getName());
-		model.add(Values.statement(classIri(className), JAVAP("hasMember"), field));
-		model.add(Values.statement(field, RDF.TYPE, JAVAP("Variable")));
-		model.add(Values.statement(field, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + ":" + fmInfo.getDescriptor())));
-		model.add(Values.statement(field, JAVAP("name"), Values.literal(fmInfo.getName())));
-        model.add(Values.statement(field, JAVAP("hasType"), getTypeIndividual(model, fmInfo.getDescriptor())));
+		model.add(Values.statement(JcflVocab.classIri(className), JcflVocab.JAVAP("hasMember"), field));
+		model.add(Values.statement(field, RDF.TYPE, JcflVocab.JAVAP("Variable")));
+		model.add(Values.statement(field, RDFS.LABEL, Values.literal(className + "." + fmInfo.getName() + ":" + fmInfo.getDescriptorString())));
+		model.add(Values.statement(field, JcflVocab.JAVAP("name"), Values.literal(fmInfo.getName())));
+        model.add(Values.statement(field, JcflVocab.JAVAP("hasType"), getTypeIndividual(model, fmInfo.getDescriptorString())));
         // TODO type
 		for (AttributeInfo a : fmInfo.attributes) {
 			if (a.type.equals("ConstantValue")) {
 				ConstantPoolInfo cv = ((ConstantValue) a).constantValue;
 				if (cv.type == ConstantPoolInfo.InfoType.STRING) {
-					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(cv.asString())));
+					model.add(Values.statement(field, JcflVocab.JAVAP("initialValue"), Values.literal(cv.asString())));
 				} else if (cv.type == ConstantPoolInfo.InfoType.INTEGER) {
-					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(((IntegerInfo) cv).value)));
+					model.add(Values.statement(field, JcflVocab.JAVAP("initialValue"), Values.literal(((IntegerInfo) cv).value)));
 				} else if (cv.type == ConstantPoolInfo.InfoType.FLOAT) {
-					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(((FloatInfo) cv).value)));
+					model.add(Values.statement(field, JcflVocab.JAVAP("initialValue"), Values.literal(((FloatInfo) cv).value)));
 				} else if (cv.type == ConstantPoolInfo.InfoType.LONG) {
-					model.add(Values.statement(field, JAVAP("initialValue"), Values.literal(((LongInfo) cv).value)));
+					model.add(Values.statement(field, JcflVocab.JAVAP("initialValue"), Values.literal(((LongInfo) cv).value)));
 				} else if (cv.type == ConstantPoolInfo.InfoType.DOUBLE) {
-					// Stardog's `RDFWriters' serializes these incorrectly causing parse errors when loading
-					// TODO they shouldn't be strings, but it's OK for the moment
 					double v = ((DoubleInfo) cv).value;
 					Literal l = Values.literal(v);
-					if (Double.isNaN(v)) {
-						l = Values.literal("NaN");//, StardogValueFactory.XSD.DOUBLE);
-					} else if (v == Double.NEGATIVE_INFINITY) {
-						l = Values.literal("-INF");//, StardogValueFactory.XSD.DOUBLE);
-					} else if (v == Double.POSITIVE_INFINITY) {
-						l = Values.literal("INF");//, StardogValueFactory.XSD.DOUBLE);
-					} else if (v < 0 && v > -1) {
-						// this one is odd, I get something like ..25e-1 for "-0.25"
-						l = Values.literal("" + v);
-					}
-					model.add(Values.statement(field, JAVAP("initialValue"), l));
+					model.add(Values.statement(field, JcflVocab.JAVAP("initialValue"), l));
 
 					//model.add(field, JAVAP("initialValue"), Values.literal(((DoubleInfo) cv).value));
 				} else {
@@ -188,15 +160,18 @@ public class ClassToRdf {
 	}
 
 	public static void toRdf(Set<Statement> model, ClassFile cf) {
-		IRI classIri = classIri(cf.getClassName());
-		model.add(Values.statement(classIri, RDF.TYPE, JAVAP("Class")));
-		model.add(Values.statement(classIri, RDFS.LABEL, Values.literal(cf.getClassName())));
-		model.add(Values.statement(classIri, JAVAP("name"), Values.literal(cf.getClassName())));
+		IRI classIri = JcflVocab.classIri(cf.className);
+		model.add(Values.statement(classIri, RDF.TYPE, JcflVocab.JAVAP("Class")));
+		model.add(Values.statement(classIri, RDFS.LABEL, Values.literal(cf.className)));
+		model.add(Values.statement(classIri, JcflVocab.JAVAP("name"), Values.literal(cf.className)));
 
-		model.add(Values.statement(classIri, JAVAP("subClassOf"), classIri(cf.getSuperclassName())));
+		model.add(Values.statement(classIri, JcflVocab.JAVAP("subClassOf"), JcflVocab.classIri(cf.superclassName)));
 		cf.getInterfaces().stream()
-			.map(ClassToRdf::classIri)
-			.forEach(theInterface -> model.add(Values.statement(classIri, JAVAP("implements"), theInterface)));
+			.map(JcflVocab::classIri)
+			.forEach(theInterface -> model.add(Values.statement(classIri, JcflVocab.JAVAP("implements"), theInterface)));
+
+		SerializeAttributes cfAttrSerializer = new SerializeAttributes(model, classIri);
+		cf.attributes.forEach(attr -> attr.accept(cfAttrSerializer));
 
         // TODO add interface and other modifiers, visibility, local variables, throw declarations
 		for (FieldOrMethodInfo fm : cf.fieldsAndMethods) {
@@ -207,93 +182,32 @@ public class ClassToRdf {
 					System.err.println("Failed to analyze: " + fm);
 					ex.printStackTrace();
 				}
-				
-				constructMethod(model, cf.getClassName(), fm);
+
+				constructMethod(model, cf.className, fm);
 			} else if (fm.type == 'F') {
-				constructField(model, cf.getClassName(), fm);
+				constructField(model, cf.className, fm);
 			}
 		}
 	}
 
-	public static String toN3String(Set<Statement> m) {
+	public static String toTurtleString(Set<Statement> m) {
 
 		List<Namespace> namespaces = new ArrayList<>();
 		Namespaces.EXTENDED.forEach(namespaces::add);
-		namespaces.add(Values.namespace("javap", "http://jbalint/javap#"));
+		namespaces.add(Values.namespace("javap", NS));
 
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		RDFWriters.write(output, RDFFormats.PRETTY_TURTLE, m, namespaces);
 		return new String(output.toByteArray());
 	}
 
-	public static void writeN3String(Set<Statement> m, OutputStream output) {
+	public static void writeTurtleString(Set<Statement> m, OutputStream output) {
 
 		List<Namespace> namespaces = new ArrayList<>();
 		Namespaces.EXTENDED.forEach(namespaces::add);
-		namespaces.add(Values.namespace("javap", "http://jbalint/javap#"));
+		namespaces.add(Values.namespace("javap", NS));
 
 		RDFWriters.write(output, RDFFormats.PRETTY_TURTLE, m, namespaces);
 	}
 
-	private static class AttributeConstructor implements AttributeVisitor {
-
-		private final Set<Statement> mModel;
-
-		private final IRI mMethod;
-
-		public AttributeConstructor(final Set<Statement> model, final IRI theMethod) {
-			mModel = model;
-			mMethod = theMethod;
-		}
-
-		@Override
-		public Object visit(final ConstantValue attribute) {
-			return null;
-		}
-
-		@Override
-		public Object visit(final Code attribute) {
-			return null;
-		}
-
-		@Override
-		public Object visit(final Deprecated attribute) {
-			mModel.add(Values.statement(mMethod, RDF.TYPE, JAVAP("Deprecated")));
-			return null;
-		}
-
-		@Override
-		public Object visit(final InnerClasses attribute) {
-			return null;
-		}
-
-		@Override
-		public Object visit(final LineNumberTable attribute) {
-			return null;
-		}
-
-		@Override
-		public Object visit(final LocalVariableTable attribute) {
-			return null;
-		}
-
-		@Override
-		public Object visit(final LocalVariableTypeTable attribute) {
-			return null;
-		}
-
-		@Override
-		public Object visit(final SourceFile attribute) {
-			mModel.add(Values.statement(mMethod, JAVAP("sourceFile"), Values.literal(attribute.sourceFile)));
-			return null;
-		}
-
-		@Override
-		public Object visit(final Exceptions attribute) {
-			for (ClassInfo thrownClass : attribute.exceptions) {
-				mModel.add(Values.statement(mMethod, JAVAP("throws"), classIri(thrownClass.asString())));
-			}
-			return null;
-		}
-	}
 }

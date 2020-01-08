@@ -1,9 +1,9 @@
 package com.jbalint.jcfl;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Supplier;
+
+import com.google.common.collect.Lists;
 
 public class FieldOrMethodInfo {
     public ClassFile cf;
@@ -13,11 +13,6 @@ public class FieldOrMethodInfo {
 	public int descriptorIndex;
 	public List<AttributeInfo> attributes = new ArrayList<>();
 	public ConstantPoolInfo constantPool[];
-
-	static class Descriptor {
-		String returnType;
-		List<String> argumentTypes = new LinkedList<>();
-	}
 
 	private Descriptor descriptor;
 
@@ -32,65 +27,24 @@ public class FieldOrMethodInfo {
 		return constantPool[nameIndex].asString();
 	}
 
-	public String getDescriptor() {
+	public String getDescriptorString() {
 		return constantPool[descriptorIndex].asString();
 	}
 
-	private static int arrayDepth(String s, int startIndex) {
-	    int end = startIndex;
-	    while (s.charAt(end++) == '[');
-        return end - startIndex - 1;
-    }
-
-	private void parseDescriptor() {
-		descriptor = new Descriptor();
-		String desc = constantPool[descriptorIndex].asString();
-		// start at 1 to skip first opening paren
-		for (int i = 1; i < desc.length(); /* increment inline */) {
-			if (desc.charAt(i) == ')') {
-				i++;
-				descriptor.returnType = desc.substring(i);
-                break;
-			} else {
-				switch (desc.charAt(i)) {
-					case '[':
-					    // need to look at first char after array depth prefix
-					    int d = arrayDepth(desc, i);
-                        if (desc.charAt(d + i) == 'L') {
-                            String type = desc.substring(i, desc.indexOf(';', d + i) + 1);
-                            i += type.length();
-                            descriptor.argumentTypes.add(type);
-                        } else {
-                            descriptor.argumentTypes.add(desc.substring(i, i + d + 1));
-                            i += d + 1;
-                        }
-                        break;
-					case 'L':
-						String type = desc.substring(i, desc.indexOf(';', i) + 1);
-						i += type.length();
-						descriptor.argumentTypes.add(type);
-						break;
-					default:
-						descriptor.argumentTypes.add(desc.substring(i, i+1));
-                        i++;
-						break;
-				}
-			}
+	private Descriptor getDescriptor() {
+		if (descriptor == null) {
+			String desc = constantPool[descriptorIndex].asString();
+			descriptor = Descriptor.parse(desc);
 		}
+		return descriptor;
 	}
 
 	public String getReturnTypeName() {
-		if (descriptor == null) {
-			parseDescriptor();
-		}
-		return descriptor.returnType;
+		return getDescriptor().returnType.toString();
 	}
 
 	public List<String> getArgumentTypeNames() {
-		if (descriptor == null) {
-			parseDescriptor();
-		}
-		return descriptor.argumentTypes;
+		return Lists.transform(getDescriptor().argumentTypes, Object::toString);
 	}
 
 	public boolean isAbstract() {
@@ -414,7 +368,7 @@ public class FieldOrMethodInfo {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-        sb.append(cf.getClassName()).append(" - ");
+		sb.append(cf.className).append(" - ");
 		if (type == 'F') {
 			sb.append("Field: ").append(getName()).append(" : ").append(getDescriptor());
 		} else if (type == 'M') {

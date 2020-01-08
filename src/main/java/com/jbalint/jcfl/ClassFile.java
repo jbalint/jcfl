@@ -9,28 +9,15 @@ public class ClassFile {
 	public int version;
 	public ConstantPoolInfo constantPool[];
 	public int accessFlags;
-	public int thisClassIndex;
-	public int superclassIndex;
+	public String className;
+	public String superclassName;
 	public List<ClassInfo> interfaces = new ArrayList<>();
 	public List<FieldOrMethodInfo> fieldsAndMethods = new ArrayList<>();
 	public List<AttributeInfo> attributes = new ArrayList<>();
 
-	public String getClassName() {
-		return constantPool[thisClassIndex].asString();
-	}
-
-	public String getSuperclassName() {
-		if (constantPool[superclassIndex] == null) {
-			// this should only happen for java.lang.Object. just make it point to itself.
-			return "java/lang/Object";
-		} else {
-			return constantPool[superclassIndex].asString();
-		}
-	}
-
 	public List<String> getInterfaces() {
 		return interfaces.stream()
-			.map(ci -> ci.asString())
+			.map(ClassInfo::asString)
 			.collect(Collectors.toList());
 	}
 
@@ -42,8 +29,8 @@ public class ClassFile {
 	public String toString() {
 		StringBuffer sb = new StringBuffer("Java class file:");
 		sb.append("\n  version=" + version);
-		sb.append("\n  class=" + getClassName());
-		sb.append("\n  superclass=" + getSuperclassName());
+		sb.append("\n  class=" + className);
+		sb.append("\n  superclass=" + superclassName);
 		for (FieldOrMethodInfo fm : fieldsAndMethods) {
 			sb.append("\n  " + fm);
 		}

@@ -16,7 +16,7 @@ import com.stardog.stark.Statement;
 
 import com.google.common.io.Files;
 import com.jbalint.jcfl.ClassFile;
-import com.jbalint.jcfl.Loader;
+import com.jbalint.jcfl.ClassFileParser;
 
 /**
  * Parse a dir containing JARs to RDF
@@ -35,7 +35,7 @@ public class JarDirToRdf {
 					continue;
 				}
 				InputStream is = f.getInputStream(e);
-				ClassFile cf = Loader.load(is);
+				ClassFile cf = ClassFileParser.parser(is);
 				ClassToRdf.toRdf(model, cf);
 			}
 
@@ -57,7 +57,7 @@ public class JarDirToRdf {
 		                    .depthFirstPostOrder(dir))
 		       .filter(f -> f.isFile() && f.getName().endsWith(".jar"))
 		       .map(JarDirToRdf::jarToRdf)
-		       .forEach(m -> ClassToRdf.writeN3String(m, fos));
+		       .forEach(m -> ClassToRdf.writeTurtleString(m, fos));
 
 		fos.close();
 	}

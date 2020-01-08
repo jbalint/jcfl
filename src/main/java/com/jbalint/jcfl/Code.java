@@ -38,7 +38,10 @@ public class Code extends AttributeInfo {
         }
         int attributesCount = is.readUShort();
         for (int i = 0; i < attributesCount; ++i) {
-            info.attributes.add(AttributeInfo.parseAttribute(constantPool, is));
+	        AttributeInfo attr = AttributeInfo.parseAttribute(constantPool, is);
+	        if (attr != null) {
+		        info.attributes.add(attr);
+	        }
         }
         return info;
     }

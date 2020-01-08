@@ -33,7 +33,7 @@ repositories {
 }
 
 dependencies {
-    compile "com.complexible.stardog:client-http:7.0.3"
+    compile "com.complexible.stardog:client-http:7.1.0"
     testCompile "junit:junit:4.12"
 }
 

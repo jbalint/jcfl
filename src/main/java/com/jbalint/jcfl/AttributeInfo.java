@@ -17,6 +17,9 @@ public abstract class AttributeInfo {
         return null;
     }
 
+    /**
+     * Parse an attribute
+     */
     public static AttributeInfo parseAttribute(ConstantPoolInfo constantPool[], UnsignedDataInputStream is) throws IOException {
         int typeIndex = is.readUShort();
         String type = constantPool[typeIndex].asString();
@@ -40,7 +43,9 @@ public abstract class AttributeInfo {
         } else if ("Signature".equals(type)) {
             return Signature.parse(constantPool, is);
         } else if ("RuntimeVisibleAnnotations".equals(type)) {
+            return RuntimeAnnotations.parse(constantPool, is, true);
         } else if ("RuntimeInvisibleAnnotations".equals(type)) {
+            return RuntimeAnnotations.parse(constantPool, is, false);
         } else if ("RuntimeVisibleParameterAnnotations".equals(type)) {
         } else if ("RuntimeInvisibleParameterAnnotations".equals(type)) {
         } else if ("RuntimeVisibleTypeAnnotations".equals(type)) {

@@ -9,7 +9,7 @@ public class ClassInfo extends ConstantPoolInfo {
 
 	@Override
 	public String asString() {
-		return constantPool[nameIndex].asString();
+		return ClassBinaryName.binaryNameToClassName(constantPool[nameIndex].asString());
 	}
 
 	@Override

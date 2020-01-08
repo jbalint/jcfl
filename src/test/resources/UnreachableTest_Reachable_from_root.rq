@@ -1,0 +1,20 @@
+prefix javap: <http://jbalint/javap#>
+
+select (localname(?testMethod) as ?testMethodName) from <tag:stardog:api:context:all> {
+  # Root suites from which all test methods must be reachable
+  values ?testRoot {
+    javap:com.jbalint.jcfl.testcode.UnreachableTestsClasses%24Suite
+  }
+  # TODO : need to make this transitive for IntermediateSuite to find references
+  ?testRoot javap:hasAnnotation [
+    # It's possible this exists without @Runwith(Suite.class) but we'll assume that's true for now
+    javap:annotationType javap:org.junit.runners.Suite%24SuiteClasses ;
+    javap:hasElementValue / javap:hasArrayValue / javap:hasClass ?referencedTestClass
+  ] .
+  { ?referencedTestClass javap:hasMember ?testMethod . }
+  UNION {
+      ?referencedTestClass javap:subClassOf ?superClass .
+      ?superClass javap:hasMember ?testMethod
+  }
+  ?testMethod javap:hasAnnotation / javap:annotationType javap:org.junit.Test .
+}

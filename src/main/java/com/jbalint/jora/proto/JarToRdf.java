@@ -13,7 +13,7 @@ import java.util.jar.JarFile;
 import com.stardog.stark.Statement;
 
 import com.jbalint.jcfl.ClassFile;
-import com.jbalint.jcfl.Loader;
+import com.jbalint.jcfl.ClassFileParser;
 
 /**
  * Read a JAR file and convert all classes to javap RDF
@@ -32,13 +32,13 @@ public class JarToRdf {
 				continue;
 			}
 			InputStream is = f.getInputStream(e);
-			ClassFile cf = Loader.load(is);
+			ClassFile cf = ClassFileParser.parser(is);
 			ClassToRdf.toRdf(model, cf);
 		}
 
 		String outfile = "output/" + new java.io.File(args[0]).getName() + ".javap.ttl";
 		FileOutputStream fos = new FileOutputStream(outfile);
-		ClassToRdf.writeN3String(model, fos);
+		ClassToRdf.writeTurtleString(model, fos);
 		fos.close();
 	}
 }
