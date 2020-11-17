@@ -92,16 +92,22 @@ class SerializeAttributes implements AttributeVisitor {
 		switch (elementValue.valueType) {
 			case ConstantValue:
 				// TODO :
-				throw new UnsupportedOperationException();
+				System.err.println("Ignoring " + subject + " " + elementValue);
+//				throw new UnsupportedOperationException();
+				break;
 			case ClassName:
 				mModel.add(Values.statement(subject, JcflVocab.JAVAP("hasClass"), JcflVocab.classIri(elementValue.className)));
 				break;
 			case EnumConstant:
 				// TODO :
-				throw new UnsupportedOperationException();
+				System.err.println("Ignoring " + subject + " " + elementValue);
+//				throw new UnsupportedOperationException();
+				break;
 			case Annotation:
 				// TODO :
-				throw new UnsupportedOperationException();
+				System.err.println("Ignoring " + subject + " " + elementValue);
+//				throw new UnsupportedOperationException();
+				break;
 			case Array:
 				BNode array = Values.bnode();
 				mModel.add(Values.statement(subject, JcflVocab.JAVAP("hasArrayValue"), array));

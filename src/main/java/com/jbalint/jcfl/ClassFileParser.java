@@ -107,15 +107,15 @@ public class ClassFileParser {
 		return info;
 	}
 
-	public static ClassFile parser(File file) throws IOException {
-		return parser(new FileInputStream(file));
+	public static ClassFile parse(File file) throws IOException {
+		return parse(new FileInputStream(file));
 	}
 
 	/**
 	 * Load and parse a Java class file.
 	 */
 	// alias shell='java -Xcheck:jni -esa -agentlib:yt -classpath build/classes/main java.util.prefs.Base64'
-	public static ClassFile parser(InputStream fileInputStream) throws IOException {
+	public static ClassFile parse(InputStream fileInputStream) throws IOException {
 		ClassFile cf = new ClassFile();
 		try (UnsignedDataInputStream is = new UnsignedDataInputStream(fileInputStream)) {
 			cf.magic = is.readInt();

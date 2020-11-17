@@ -38,7 +38,7 @@ import static com.jbalint.jcfl.JcflVocab.NS;
 /**
  * Serialize a (parsed) Class to RDF
  */
-public class ClassToRdf {
+public class ClassFileToRdf {
 
 	static IRI methodIri(String className, String methodName, String methodSignature) {
 		return JcflVocab.JAVAP(className + "." + methodName + methodSignature.replaceAll("/", "."));

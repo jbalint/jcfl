@@ -15,10 +15,8 @@ import com.stardog.stark.query.SelectQueryResult;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Sets;
-import com.google.common.io.CharSource;
-import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
-import com.jbalint.jora.proto.ClassToRdf;
+import com.jbalint.jora.proto.ClassFileToRdf;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -49,9 +47,9 @@ public class UnreachableTestsTest {
 			File dir = new File("out/test/jcfl/com/jbalint/jcfl/testcode");
 			conn.begin();
 			for (File file : dir.listFiles()) {
-				ClassFile cf = ClassFileParser.parser(file);
-				conn.add().graph(ClassToRdf.toRdf(cf));
-				ClassToRdf.writeTurtleString(ClassToRdf.toRdf(cf), System.err);
+				ClassFile cf = ClassFileParser.parse(file);
+				conn.add().graph(ClassFileToRdf.toRdf(cf));
+				ClassFileToRdf.writeTurtleString(ClassFileToRdf.toRdf(cf), System.err);
 			}
 			conn.commit();
 

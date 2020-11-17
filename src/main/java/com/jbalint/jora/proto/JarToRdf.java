@@ -32,13 +32,13 @@ public class JarToRdf {
 				continue;
 			}
 			InputStream is = f.getInputStream(e);
-			ClassFile cf = ClassFileParser.parser(is);
-			ClassToRdf.toRdf(model, cf);
+			ClassFile cf = ClassFileParser.parse(is);
+			ClassFileToRdf.toRdf(model, cf);
 		}
 
 		String outfile = "output/" + new java.io.File(args[0]).getName() + ".javap.ttl";
 		FileOutputStream fos = new FileOutputStream(outfile);
-		ClassToRdf.writeTurtleString(model, fos);
+		ClassFileToRdf.writeTurtleString(model, fos);
 		fos.close();
 	}
 }

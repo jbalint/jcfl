@@ -35,8 +35,8 @@ public class JarDirToRdf {
 					continue;
 				}
 				InputStream is = f.getInputStream(e);
-				ClassFile cf = ClassFileParser.parser(is);
-				ClassToRdf.toRdf(model, cf);
+				ClassFile cf = ClassFileParser.parse(is);
+				ClassFileToRdf.toRdf(model, cf);
 			}
 
 			return model;
@@ -57,7 +57,7 @@ public class JarDirToRdf {
 		                    .depthFirstPostOrder(dir))
 		       .filter(f -> f.isFile() && f.getName().endsWith(".jar"))
 		       .map(JarDirToRdf::jarToRdf)
-		       .forEach(m -> ClassToRdf.writeTurtleString(m, fos));
+		       .forEach(m -> ClassFileToRdf.writeTurtleString(m, fos));
 
 		fos.close();
 	}

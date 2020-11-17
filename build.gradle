@@ -54,6 +54,8 @@ apply plugin: 'application'
 mainClassName = "com.jbalint.jora.proto.JarDirToRdf"
 
 run {
+    doLast {
 	standardInput = System.in
 	args "$jardir", "$outfile"
+    }
 }
