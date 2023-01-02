@@ -28,13 +28,13 @@ repositories {
     mavenLocal()
     jcenter()
     maven {
-        url "http://maven.stardog.com"
+        url "https://maven.stardog.com"
     }
 }
 
 dependencies {
-    compile "com.complexible.stardog:client-http:7.1.0"
-    testCompile "junit:junit:4.12"
+    implementation "com.complexible.stardog:client-http:7.1.0"
+    testImplementation "junit:junit:4.12"
 }
 
 sourceSets {
